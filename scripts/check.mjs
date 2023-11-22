@@ -36,15 +36,15 @@ const CLASH_MAP = {
 };
 */
 /* ======= clash meta ======= */
-const META_URL_PREFIX = `https://github.com/wonfen/Clash.Meta/releases/download/`;
-const META_VERSION = "2023.11.23";
+const META_URL_PREFIX = `https://github.com/MerlinKodo/clash-rev/releases/download/`;
+const META_VERSION = "v1.0.2";
 
 const META_MAP = {
-  "win32-x64": "clash.meta-win-amd64",
-  "darwin-x64": "clash.meta-darwin-amd64",
-  "darwin-arm64": "clash.meta-darwin-arm64",
-  "linux-x64": "clash.meta-linux-amd64",
-  "linux-arm64": "clash.meta-linux-arm64",
+  "win32-x64": "clash.rev-windows-amd64",
+  "darwin-x64": "clash.rev-darwin-amd64",
+  "darwin-arm64": "clash.rev-darwin-arm64",
+  "linux-x64": "clash.rev-linux-amd64",
+  "linux-arm64": "clash.rev-linux-arm64",
 };
 
 /*

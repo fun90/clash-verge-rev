@@ -16,7 +16,7 @@ const SettingPage = () => {
   };
 
   const toGithubRepo = useLockFn(() => {
-    return openWebUrl("https://github.com/wonfen/clash-verge-rev");
+    return openWebUrl("https://github.com/fun90/clash-verge-rev");
   });
 
   return (
