@@ -31,7 +31,7 @@ impl IClashTemp {
                 true => 7898.into(),
             },
         );
-        map.insert("log-level".into(), "info".into());
+        map.insert("log-level".into(), "error".into());
         map.insert("allow-lan".into(), false.into());
         map.insert("mode".into(), "rule".into());
         map.insert(
