@@ -44,10 +44,7 @@
       "windows": {
         "certificateThumbprint": null,
         "digestAlgorithm": "sha256",
-        "timestampUrl": "",
-        "wix": {
-          "language": ["zh-CN", "en-US", "ru-RU"]
-        }
+        "timestampUrl": ""
       }
     },
     "updater": {
