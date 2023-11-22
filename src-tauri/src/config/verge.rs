@@ -133,7 +133,7 @@ impl IVerge {
             theme_blur: Some(false),
             traffic_graph: Some(true),
             enable_memory_usage: Some(true),
-            enable_auto_launch: Some(false),
+            enable_auto_launch: Some(true),
             enable_silent_start: Some(false),
             enable_system_proxy: Some(false),
             enable_proxy_guard: Some(false),
@@ -141,7 +141,9 @@ impl IVerge {
             auto_close_connection: Some(true),
             enable_builtin_enhanced: Some(true),
             enable_clash_fields: Some(true),
-            auto_log_clean: Some(3),
+            auto_log_clean: Some(1),
+            web_ui_list: Some(vec!["https://yacd.metacubex.one/?host=%host&port=%port&secret=%secret".into()]),
+            app_log_level: Some("error".into()),
             ..Self::default()
         }
     }
