@@ -7,6 +7,8 @@ import { openWebUrl } from "@/services/cmds";
 import SettingVerge from "@/components/setting/setting-verge";
 import SettingClash from "@/components/setting/setting-clash";
 import SettingSystem from "@/components/setting/setting-system";
+import { useRecoilState } from "recoil";
+import { atomThemeMode } from "@/services/states";
 
 const SettingPage = () => {
   const { t } = useTranslation();
@@ -19,19 +21,41 @@ const SettingPage = () => {
     return openWebUrl("https://github.com/fun90/clash-verge-rev");
   });
 
+  const [mode, setMode] = useRecoilState(atomThemeMode);
+  const backgroundColor = mode === "light" ? "#ffffff" : "#191629";
+
   return (
     <BasePage title={t("Settings")}>
       <Grid container spacing={{ xs: 2, lg: 3 }}>
         <Grid item xs={12} md={6}>
-          <Paper sx={{ borderRadius: 1, boxShadow: 2, marginBottom: 2 }}>
+          <Paper
+            sx={{
+              borderRadius: 1,
+              boxShadow: 2,
+              marginBottom: 2,
+              backgroundColor: { backgroundColor },
+            }}
+          >
             <SettingSystem onError={onError} />
           </Paper>
-          <Paper sx={{ borderRadius: 1, boxShadow: 2 }}>
+          <Paper
+            sx={{
+              borderRadius: 1,
+              boxShadow: 2,
+              backgroundColor: { backgroundColor },
+            }}
+          >
             <SettingClash onError={onError} />
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Paper sx={{ borderRadius: 1, boxShadow: 2 }}>
+          <Paper
+            sx={{
+              borderRadius: 1,
+              boxShadow: 2,
+              backgroundColor: { backgroundColor },
+            }}
+          >
             <SettingVerge onError={onError} />
           </Paper>
         </Grid>

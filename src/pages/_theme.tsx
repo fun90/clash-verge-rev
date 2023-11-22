@@ -1,11 +1,11 @@
 // default theme setting
 export const defaultTheme = {
-  primary_color: "#1867c0",
-  secondary_color: "#3a88bb",
-  primary_text: "#1d1d1f",
-  secondary_text: "#424245",
-  info_color: "#0288d1",
-  error_color: "#d32f2f",
+  primary_color: "#8A6EF0",
+  secondary_color: "#B56EF0",
+  primary_text: "#887DB0",
+  secondary_text: "#7268A8",
+  info_color: "#6E7CF0",
+  error_color: "#DF6EF0",
   warning_color: "#ed6c02",
   success_color: "#2e7d32",
   font_family: `"Roboto", "Helvetica", "Arial", sans-serif, "twemoji mozilla"`,

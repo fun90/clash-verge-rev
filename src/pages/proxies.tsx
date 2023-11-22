@@ -72,7 +72,7 @@ const ProxyPage = () => {
         </Box>
       }
     >
-      <Paper
+      <Box
         sx={{
           borderRadius: 1,
           boxShadow: 0,
@@ -82,7 +82,7 @@ const ProxyPage = () => {
         }}
       >
         <ProxyGroups mode={curMode!} />
-      </Paper>
+      </Box>
     </BasePage>
   );
 };
