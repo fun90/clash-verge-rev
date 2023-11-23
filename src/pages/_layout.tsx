@@ -112,7 +112,7 @@ const Layout = () => {
         >
           <div className="layout__left" data-windrag>
             <div className="the-logo" data-windrag>
-              <LogoSvg />
+              <LogoSvg style={{ height: 90, marginTop: 10 }} />
 
               {!(OS === "windows" && WIN_PORTABLE) && (
                 <UpdateButton className="the-newbtn" />
