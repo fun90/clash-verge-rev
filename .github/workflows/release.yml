@@ -71,7 +71,6 @@ jobs:
       - name: Portable Bundle
         if: matrix.os == 'windows-latest'
         run: |
-          pnpm build
           pnpm portable
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
