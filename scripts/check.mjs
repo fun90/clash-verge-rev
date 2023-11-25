@@ -1,5 +1,6 @@
 import fs from "fs-extra";
 import zlib from "zlib";
+import tar from "tar";
 import path from "path";
 import AdmZip from "adm-zip";
 import fetch from "node-fetch";
@@ -36,15 +37,14 @@ const CLASH_MAP = {
 };
 */
 /* ======= clash meta ======= */
-const META_URL_PREFIX = `https://github.com/MerlinKodo/clash-rev/releases/download/`;
-const META_VERSION = "v1.0.2";
+const META_URL_PREFIX = `https://github.com/MerlinKodo/akasha-terminal-bin/releases/download/latest`;
 
 const META_MAP = {
-  "win32-x64": "clash.rev-windows-amd64",
-  "darwin-x64": "clash.rev-darwin-amd64",
-  "darwin-arm64": "clash.rev-darwin-arm64",
-  "linux-x64": "clash.rev-linux-amd64",
-  "linux-arm64": "clash.rev-linux-arm64",
+  "win32-x64": "akasha-terminal-win-amd64",
+  "darwin-x64": "akasha-terminal-darwin-amd64",
+  "darwin-arm64": "akasha-terminal-darwin-arm64",
+  "linux-x64": "akasha-terminal-linux-amd64",
+  "linux-arm64": "akasha-terminal-linux-arm64",
 };
 
 /*
@@ -118,10 +118,10 @@ function clashS3() {
 function clashMeta() {
   const name = META_MAP[`${platform}-${arch}`];
   const isWin = platform === "win32";
-  const urlExt = isWin ? "zip" : "gz";
-  const downloadURL = `${META_URL_PREFIX}${META_VERSION}/${name}-${META_VERSION}.${urlExt}`;
+  const urlExt = isWin ? "zip" : "tgz";
+  const downloadURL = `${META_URL_PREFIX}/${name}.${urlExt}`;
   const exeFile = `${name}${isWin ? ".exe" : ""}`;
-  const zipFile = `${name}-${META_VERSION}.${urlExt}`;
+  const zipFile = `${name}.${urlExt}`;
 
   return {
     name: "clash-meta",
@@ -163,9 +163,9 @@ async function resolveSidecar(binInfo) {
       await fs.rename(tempExe, sidecarPath);
       console.log(`[INFO]: "${name}" unzip finished`);
     } else {
-      // gz
+      // tgz
       const readStream = fs.createReadStream(tempZip);
-      const writeStream = fs.createWriteStream(sidecarPath);
+      // const writeStream = fs.createWriteStream(sidecarPath);
       await new Promise((resolve, reject) => {
         const onError = (error) => {
           console.error(`[ERROR]: "${name}" gz failed:`, error.message);
@@ -173,11 +173,29 @@ async function resolveSidecar(binInfo) {
         };
         readStream
           .pipe(zlib.createGunzip().on("error", onError))
-          .pipe(writeStream)
+          .pipe(tar.extract({ cwd: sidecarDir }))
           .on("finish", () => {
-            console.log(`[INFO]: "${name}" gunzip finished`);
-            execSync(`chmod 755 ${sidecarPath}`);
-            console.log(`[INFO]: "${name}" chmod binary finished`);
+            console.log(`[INFO]: "${name}" tar unzip finished`);
+            fs.readdir(sidecarDir, (err, files) => {
+              if (err) {
+                console.error("Error reading directory:", err);
+                return;
+              }
+              if (files.length > 0) {
+                const originalFile = path.join(sidecarDir, files[0]);
+                execSync(`chmod 755 ${originalFile}`);
+                console.log(`[INFO]: "${originalFile}" chmod binary finished`);
+                fs.rename(originalFile, sidecarPath, (err) => {
+                  if (err) {
+                    console.error("Error renaming file:", err);
+                  } else {
+                    console.log("File renamed successfully");
+                  }
+                });
+              } else {
+                console.log("No files found in the extracted directory");
+              }
+            });
             resolve();
           })
           .on("error", onError);
