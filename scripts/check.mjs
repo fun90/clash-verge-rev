@@ -120,7 +120,7 @@ function clashMeta() {
   const isWin = platform === "win32";
   const urlExt = isWin ? "zip" : "tgz";
   const downloadURL = `${META_URL_PREFIX}/${name}.${urlExt}`;
-  const exeFile = `${name}${isWin ? ".exe" : ""}`;
+  const exeFile = isWin ? "虚空终端-win-amd64.exe" : name;
   const zipFile = `${name}.${urlExt}`;
 
   return {
