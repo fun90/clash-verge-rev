@@ -29,14 +29,14 @@ export const BasePage: React.FC<Props> = (props) => {
 
         <div
           className="base-container"
-          style={{ backgroundColor: isDark ? "#090909" : "#ffffff" }}
+          // style={{ backgroundColor: isDark ? "#090909" : "#ffffff" }}
         >
           <section
-            style={{
-              backgroundColor: isDark
-                ? alpha(theme.palette.primary.main, 0.1)
-                : "",
-            }}
+          // style={{
+          //   backgroundColor: isDark
+          //     ? alpha(theme.palette.primary.main, 0.1)
+          //     : "",
+          // }}
           >
             <div className="base-content" style={contentStyle}>
               {children}
