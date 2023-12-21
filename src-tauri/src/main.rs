@@ -34,6 +34,7 @@ fn main() -> std::io::Result<()> {
             cmds::open_logs_dir,
             cmds::open_web_url,
             cmds::open_core_dir,
+            cmds::get_portable_flag,
             // cmds::kill_sidecar,
             cmds::restart_sidecar,
             cmds::grant_permission,
@@ -59,6 +60,7 @@ fn main() -> std::io::Result<()> {
             cmds::patch_profile,
             cmds::create_profile,
             cmds::import_profile,
+            cmds::reorder_profile,
             cmds::update_profile,
             cmds::delete_profile,
             cmds::read_profile_file,
@@ -104,6 +106,10 @@ fn main() -> std::io::Result<()> {
             api::process::kill_children();
             app_handle.exit(0);
         }
+        tauri::RunEvent::Updater(tauri::UpdaterEvent::Downloaded) => {
+            resolve::resolve_reset();
+            api::process::kill_children();
+        }
         #[cfg(target_os = "macos")]
         tauri::RunEvent::WindowEvent { label, event, .. } => {
             use tauri::Manager;
@@ -126,6 +132,9 @@ fn main() -> std::io::Result<()> {
         tauri::RunEvent::WindowEvent { label, event, .. } => {
             if label == "main" {
                 match event {
+                    tauri::WindowEvent::Destroyed => {
+                        let _ = resolve::save_window_size_position(&app_handle, true);
+                    }
                     tauri::WindowEvent::CloseRequested { .. } => {
                         let _ = resolve::save_window_size_position(&app_handle, true);
                     }

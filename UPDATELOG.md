@@ -1,3 +1,96 @@
+## v1.4.5
+
+### Features
+
+- 更新 MacOS 托盘图标样式(@gxx2778 贡献)
+
+### Bugs Fixes
+
+- Windows 下更新时无法覆盖`clash-verge-service.exe`的问题(需要卸载重装一次服务，下次更新生效)
+- 窗口最大化按钮变化问题
+- 窗口尺寸保存错误问题
+- 复制环境变量类型无法切换问题
+- 某些情况下闪退的问题
+- 某些订阅无法导入的问题
+
+---
+
+## v1.4.4
+
+### Features
+
+- 支持 Windows aarch64(arm64) 版本
+- 支持一键更新 GeoData
+- 支持一键更新 Alpha 内核
+- MacOS 支持在系统代理时显示不同的托盘图标
+- Linux 支持在系统代理时显示不同的托盘图标
+- 优化复制环境变量逻辑
+
+### Bugs Fixes
+
+- 修改 PID 文件的路径
+
+### Performance
+
+- 优化创建窗口的速度
+
+---
+
+## v1.4.3
+
+### Break Changes
+
+- 更改配置文件路径到标准目录(可以保证卸载时没有残留)
+- 更改 appid 为 `io.github.clash-verge-rev.clash-verge-rev`
+- 建议卸载旧版本后再安装新版本，该版本安装后不会使用旧版配置文件，你可以手动将旧版配置文件迁移到新版配置文件目录下
+
+### Features
+
+- 移除页面切换动画
+- 更改 Tun 模式托盘图标颜色
+- Portable 版本默认使用当前目录作为配置文件目录
+- 禁用 Clash 字段过滤时隐藏 Clash 字段选项
+- 优化拖拽时光标样式
+
+### Bugs Fixes
+
+- 修复 windows 下更新时没有关闭内核导致的更新失败的问题
+- 修复打开文件报错的问题
+- 修复 url 导入时无法获取中文配置名称的问题
+- 修复 alpha 内核无法显示内存信息的问题
+
+---
+
+## v1.4.2
+
+### Features
+
+- update clash meta core to mihomo 1.17.0
+- support both clash meta stable release and prerelease-alpha release
+- fixed the problem of not being able to set the system proxy when there is a dial-up link on windows system [#833](https://github.com/zzzgydi/clash-verge/issues/833)
+- support new clash field
+- support random mixed port
+- add windows x86 and linux armv7 support
+- support disable tray click event
+- add download progress for updater
+- support drag to reorder the profile
+- embed emoji fonts
+- update depends
+- improve UI style
+
+---
+
+## v1.4.1
+
+### Features
+
+- update clash meta core to newest 虚空终端(2023.11.23)
+- delete clash core UI
+- improve UI
+- change Logo to original
+
+---
+
 ## v1.4.0
 
 ### Features

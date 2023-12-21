@@ -31,6 +31,11 @@ pub async fn import_profile(url: String, option: Option<PrfOption>) -> CmdResult
 }
 
 #[tauri::command]
+pub async fn reorder_profile(active_id: String, over_id: String) -> CmdResult {
+    wrap_err!(Config::profiles().data().reorder(active_id, over_id))
+}
+
+#[tauri::command]
 pub async fn create_profile(item: PrfItem, file_data: Option<String>) -> CmdResult {
     let item = wrap_err!(PrfItem::from(item, file_data).await)?;
     wrap_err!(Config::profiles().data().append_item(item))
@@ -80,7 +85,7 @@ pub fn patch_profile(index: String, profile: PrfItem) -> CmdResult {
 }
 
 #[tauri::command]
-pub fn view_profile(index: String) -> CmdResult {
+pub fn view_profile(app_handle: tauri::AppHandle, index: String) -> CmdResult {
     let file = {
         wrap_err!(Config::profiles().latest().get_item(&index))?
             .file
@@ -93,7 +98,7 @@ pub fn view_profile(index: String) -> CmdResult {
         ret_err!("the file not found");
     }
 
-    wrap_err!(help::open_file(path))
+    wrap_err!(help::open_file(app_handle, path))
 }
 
 #[tauri::command]
@@ -229,7 +234,6 @@ pub fn open_web_url(url: String) -> CmdResult<()> {
     wrap_err!(open::that(url))
 }
 
-
 #[cfg(windows)]
 pub mod uwp {
     use super::*;
@@ -250,6 +254,11 @@ pub async fn clash_api_get_proxy_delay(
         Ok(res) => Ok(res),
         Err(err) => Err(format!("{}", err.to_string())),
     }
+}
+
+#[tauri::command]
+pub fn get_portable_flag() -> CmdResult<bool> {
+    Ok(*dirs::PORTABLE_FLAG.get().unwrap_or(&false))
 }
 
 #[cfg(windows)]

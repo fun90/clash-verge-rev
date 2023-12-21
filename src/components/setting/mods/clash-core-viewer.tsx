@@ -4,23 +4,24 @@ import { BaseDialog, DialogRef, Notice } from "@/components/base";
 import { useTranslation } from "react-i18next";
 import { useVerge } from "@/hooks/use-verge";
 import { useLockFn } from "ahooks";
-import { Lock } from "@mui/icons-material";
+import { LoadingButton } from "@mui/lab";
+import { SwitchAccessShortcut, RestartAlt } from "@mui/icons-material";
 import {
   Box,
   Button,
-  IconButton,
+  Tooltip,
   List,
   ListItemButton,
   ListItemText,
 } from "@mui/material";
 import { changeClashCore, restartSidecar } from "@/services/cmds";
-import { closeAllConnections } from "@/services/api";
+import { closeAllConnections, upgradeCore } from "@/services/api";
 import { grantPermission } from "@/services/cmds";
 import getSystem from "@/utils/get-system";
 
 const VALID_CORE = [
   // { name: "Clash", core: "clash" },
-  { name: "Clash Meta", core: "clash-meta" },
+  { name: "Clash Meta Alpha", core: "clash-meta-alpha" },
 ];
 
 const OS = getSystem();
@@ -31,13 +32,14 @@ export const ClashCoreViewer = forwardRef<DialogRef>((props, ref) => {
   const { verge, mutateVerge } = useVerge();
 
   const [open, setOpen] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
 
   useImperativeHandle(ref, () => ({
     open: () => setOpen(true),
     close: () => setOpen(false),
   }));
 
-  const { clash_core = "clash" } = verge ?? {};
+  const { clash_core = "clash-meta" } = verge ?? {};
 
   const onCoreChange = useLockFn(async (core: string) => {
     if (core === clash_core) return;
@@ -76,22 +78,53 @@ export const ClashCoreViewer = forwardRef<DialogRef>((props, ref) => {
     }
   });
 
+  const onUpgrade = useLockFn(async () => {
+    try {
+      setUpgrading(true);
+      await upgradeCore();
+      setUpgrading(false);
+      Notice.success(`Successfully upgrade core`, 1000);
+    } catch (err: any) {
+      setUpgrading(false);
+      Notice.error(err?.response.data.message || err.toString());
+    }
+  });
+
   return (
     <BaseDialog
       open={open}
       title={
         <Box display="flex" justifyContent="space-between">
           {t("Clash Core")}
-
-          <Button variant="contained" size="small" onClick={onRestart}>
-            {t("Restart")}
-          </Button>
+          <Box>
+            {clash_core !== "clash-meta" && (
+              <LoadingButton
+                variant="contained"
+                size="small"
+                startIcon={<SwitchAccessShortcut />}
+                loadingPosition="start"
+                loading={upgrading}
+                sx={{ marginRight: "8px" }}
+                onClick={onUpgrade}
+              >
+                {t("Upgrade")}
+              </LoadingButton>
+            )}
+            <Button
+              variant="contained"
+              size="small"
+              onClick={onRestart}
+              startIcon={<RestartAlt />}
+            >
+              {t("Restart")}
+            </Button>
+          </Box>
         </Box>
       }
       contentSx={{
         pb: 0,
-        width: 320,
-        height: 200,
+        width: 400,
+        height: 180,
         overflowY: "auto",
         userSelect: "text",
         marginTop: "-8px",
@@ -111,18 +144,19 @@ export const ClashCoreViewer = forwardRef<DialogRef>((props, ref) => {
             <ListItemText primary={each.name} secondary={`/${each.core}`} />
 
             {(OS === "macos" || OS === "linux") && (
-              <IconButton
-                color="inherit"
-                size="small"
-                edge="end"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onGrant(each.core);
-                }}
-              >
-                <Lock fontSize="inherit" />
-              </IconButton>
+              <Tooltip title={t("Tun mode requires")}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onGrant(each.core);
+                  }}
+                >
+                  {t("Grant")}
+                </Button>
+              </Tooltip>
             )}
           </ListItemButton>
         ))}

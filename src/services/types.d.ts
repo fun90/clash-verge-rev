@@ -14,7 +14,6 @@ type Platform =
 /**
  * defines in `vite.config.ts`
  */
-declare const WIN_PORTABLE: boolean;
 declare const OS_PLATFORM: Platform;
 
 /**
@@ -155,6 +154,8 @@ interface IProfilesConfig {
 interface IVergeConfig {
   app_log_level?: "trace" | "debug" | "info" | "warn" | "error" | string;
   language?: string;
+  tray_event?: "main_window" | "system_proxy" | "tun_mode" | string;
+  env_type?: "bash" | "cmd" | "powershell" | string;
   clash_core?: string;
   theme_mode?: "light" | "dark" | "system";
   theme_blur?: boolean;
@@ -165,6 +166,8 @@ interface IVergeConfig {
   enable_service_mode?: boolean;
   enable_silent_start?: boolean;
   enable_system_proxy?: boolean;
+  enable_random_port?: boolean;
+  verge_mixed_port?: number;
   enable_proxy_guard?: boolean;
   proxy_guard_duration?: number;
   system_proxy_bypass?: string;

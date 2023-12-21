@@ -64,6 +64,13 @@ export async function importProfile(url: string) {
   });
 }
 
+export async function reorderProfile(activeId: string, overId: string) {
+  return invoke<void>("reorder_profile", {
+    activeId,
+    overId,
+  });
+}
+
 export async function updateProfile(index: string, option?: IProfileOption) {
   return invoke<void>("update_profile", { index, option });
 }
@@ -183,4 +190,8 @@ export async function invoke_uwp_tool() {
   return invoke<void>("invoke_uwp_tool").catch((err) =>
     Notice.error(err?.message || err.toString(), 1500)
   );
+}
+
+export async function getPortableFlag() {
+  return invoke<boolean>("get_portable_flag");
 }

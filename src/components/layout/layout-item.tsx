@@ -10,12 +10,14 @@ export const LayoutItem = (props: LinkProps) => {
   const navigate = useNavigate();
 
   return (
-    <ListItem sx={{ py: 0.5, maxWidth: 250, mx: "auto" }}>
+    <ListItem sx={{ py: 0.5, maxWidth: 250, mx: "auto", padding: "1px 0px" }}>
       <ListItemButton
         selected={!!match}
         sx={[
           {
-            borderRadius: 2,
+            borderRadius: 3,
+            marginLeft: 1,
+            marginRight: 1,
             textAlign: "center",
             "& .MuiListItemText-primary": { color: "text.secondary" },
           },

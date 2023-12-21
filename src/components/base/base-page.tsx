@@ -1,6 +1,7 @@
 import React, { ReactNode } from "react";
-import { Typography } from "@mui/material";
+import { Typography, alpha } from "@mui/material";
 import { BaseErrorBoundary } from "./base-error-boundary";
+import { useCustomTheme } from "@/components/layout/use-custom-theme";
 
 interface Props {
   title?: React.ReactNode; // the page title
@@ -11,10 +12,13 @@ interface Props {
 
 export const BasePage: React.FC<Props> = (props) => {
   const { title, header, contentStyle, children } = props;
+  const { theme } = useCustomTheme();
+
+  const isDark = theme.palette.mode === "dark";
 
   return (
     <BaseErrorBoundary>
-      <div className="base-page" data-windrag>
+      <div className="base-page">
         <header data-windrag style={{ userSelect: "none" }}>
           <Typography variant="h4" component="h1" data-windrag>
             {title}
@@ -23,11 +27,22 @@ export const BasePage: React.FC<Props> = (props) => {
           {header}
         </header>
 
-        <section>
-          <div className="base-content" style={contentStyle} data-windrag>
-            {children}
-          </div>
-        </section>
+        <div
+          className="base-container"
+          style={{ backgroundColor: isDark ? "#090909" : "#ffffff" }}
+        >
+          <section
+            style={{
+              backgroundColor: isDark
+                ? alpha(theme.palette.primary.main, 0.1)
+                : "",
+            }}
+          >
+            <div className="base-content" style={contentStyle}>
+              {children}
+            </div>
+          </section>
+        </div>
       </div>
     </BaseErrorBoundary>
   );

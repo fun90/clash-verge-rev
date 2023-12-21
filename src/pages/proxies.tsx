@@ -25,7 +25,7 @@ const ProxyPage = () => {
   const { verge } = useVerge();
 
   const modeList = useMemo(() => {
-    if (verge?.clash_core === "clash-meta") {
+    if (verge?.clash_core?.includes("clash-meta")) {
       return ["rule", "global", "direct"];
     }
     return ["rule", "global", "direct", "script"];
@@ -78,7 +78,6 @@ const ProxyPage = () => {
           boxShadow: 0,
           height: "100%",
           boxSizing: "border-box",
-          py: 1,
         }}
       >
         <ProxyGroups mode={curMode!} />

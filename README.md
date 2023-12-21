@@ -1,16 +1,20 @@
 <h1 align="center">
   <img src="./src/assets/image/logo.png" alt="Clash" width="128" />
   <br>
-  Clash Verge
+  Continuation of <a href="https://github.com/zzzgydi/clash-verge">Clash Verge</a>
   <br>
 </h1>
+
+<h3 align="center">
+A Clash Meta GUI based on <a href="https://github.com/tauri-apps/tauri">Tauri</a>.
+</h3>
 
 ## Features
 
 - Since the clash core has been removed. The project no longer maintains the clash core, but only the Clash Meta core.
-- Profiles management and enhancement (by yaml and Javascript). [Doc](https://github.com/fun90/clash-verge-rev/wiki/%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97)
+- Profiles management and enhancement (by yaml and Javascript). [Doc](https://github.com/clash-verge-rev/clash-verge-rev/wiki/%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97)
 - Simple UI and supports custom theme color.
-- Built-in support [Clash.Meta](https://github.com/MetaCubeX/Clash.Meta) core.
+- Built-in support [Clash.Meta(mihomo)](https://github.com/MetaCubeX/mihomo) core.
 - System proxy setting and guard.
 
 #### TG Group: [@clash_verge_rev](https://t.me/clash_verge_rev)
@@ -88,11 +92,10 @@ Issue and PR welcome!
 
 Clash Verge rev was based on or inspired by these projects and so on:
 
-- [keiko233/clash-nyanpasu](https://github.com/keiko233/clash-nyanpasu): A Clash Verge variant.
 - [zzzgydi/clash-verge](https://github.com/zzzgydi/clash-verge): A Clash GUI based on tauri. Supports Windows, macOS and Linux.
 - [tauri-apps/tauri](https://github.com/tauri-apps/tauri): Build smaller, faster, and more secure desktop applications with a web frontend.
 - [Dreamacro/clash](https://github.com/Dreamacro/clash): A rule-based tunnel in Go.
-- [MetaCubeX/Clash.Meta](https://github.com/MetaCubeX/Clash.Meta): A rule-based tunnel in Go.
+- [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo): A rule-based tunnel in Go.
 - [Fndroid/clash_for_windows_pkg](https://github.com/Fndroid/clash_for_windows_pkg): A Windows/macOS GUI based on Clash.
 - [vitejs/vite](https://github.com/vitejs/vite): Next generation frontend tooling. It's fast!
 

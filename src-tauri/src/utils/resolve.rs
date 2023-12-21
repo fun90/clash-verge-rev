@@ -1,16 +1,68 @@
+use crate::config::IVerge;
 use crate::{config::Config, core::*, utils::init, utils::server};
 use crate::{log_err, trace_err};
 use anyhow::Result;
+use once_cell::sync::OnceCell;
+use serde_yaml::Mapping;
+use std::net::TcpListener;
 use tauri::{App, AppHandle, Manager};
+
+pub static VERSION: OnceCell<String> = OnceCell::new();
+
+pub fn find_unused_port() -> Result<u16> {
+    match TcpListener::bind("127.0.0.1:0") {
+        Ok(listener) => {
+            let port = listener.local_addr()?.port();
+            Ok(port)
+        }
+        Err(_) => {
+            let port = Config::verge()
+                .latest()
+                .verge_mixed_port
+                .unwrap_or(Config::clash().data().get_mixed_port());
+            log::warn!(target: "app", "use default port: {}", port);
+            Ok(port)
+        }
+    }
+}
 
 /// handle something when start app
 pub fn resolve_setup(app: &mut App) {
     #[cfg(target_os = "macos")]
     app.set_activation_policy(tauri::ActivationPolicy::Accessory);
-
+    let version = app.package_info().version.to_string();
     handle::Handle::global().init(app.app_handle());
+    VERSION.get_or_init(|| version.clone());
 
-    log_err!(init::init_resources(app.package_info()));
+    log_err!(init::init_resources());
+    #[cfg(target_os = "windows")]
+    log_err!(init::init_service());
+    // 处理随机端口
+    let enable_random_port = Config::verge().latest().enable_random_port.unwrap_or(false);
+
+    let mut port = Config::verge()
+        .latest()
+        .verge_mixed_port
+        .unwrap_or(Config::clash().data().get_mixed_port());
+
+    if enable_random_port {
+        port = find_unused_port().unwrap_or(
+            Config::verge()
+                .latest()
+                .verge_mixed_port
+                .unwrap_or(Config::clash().data().get_mixed_port()),
+        );
+    }
+
+    Config::verge().data().patch_config(IVerge {
+        verge_mixed_port: Some(port),
+        ..IVerge::default()
+    });
+    let _ = Config::verge().data().save_file();
+    let mut mapping = Mapping::new();
+    mapping.insert("mixed-port".into(), port.into());
+    Config::clash().data().patch_config(mapping);
+    let _ = Config::clash().data().save_config();
 
     // 启动核心
     log::trace!("init config");
@@ -60,6 +112,7 @@ pub fn create_window(app_handle: &AppHandle) {
         tauri::WindowUrl::App("index.html".into()),
     )
     .title("Clash Verge")
+    .visible(false)
     .fullscreen(false)
     .min_inner_size(600.0, 520.0);
 
@@ -91,8 +144,6 @@ pub fn create_window(app_handle: &AppHandle) {
 
     #[cfg(target_os = "windows")]
     {
-        use std::time::Duration;
-        use tokio::time::sleep;
         use window_shadows::set_shadow;
 
         match builder
@@ -126,19 +177,11 @@ pub fn create_window(app_handle: &AppHandle) {
                 log::trace!("try to create window");
                 let app_handle = app_handle.clone();
 
-                // 加点延迟避免界面闪一下
-                tauri::async_runtime::spawn(async move {
-                    sleep(Duration::from_millis(888)).await;
-
-                    if let Some(window) = app_handle.get_window("main") {
-                        trace_err!(set_shadow(&window, true), "set win shadow");
-                        trace_err!(window.show(), "set win visible");
-                        trace_err!(window.unminimize(), "set win unminimize");
-                        trace_err!(window.set_focus(), "set win focus");
-                    } else {
-                        log::error!(target: "app", "failed to create window, get_window is None")
-                    }
-                });
+                if let Some(window) = app_handle.get_window("main") {
+                    trace_err!(set_shadow(&window, true), "set win shadow");
+                } else {
+                    log::error!(target: "app", "failed to create window, get_window is None")
+                }
             }
             Err(err) => log::error!(target: "app", "failed to create window, {err}"),
         }
@@ -157,6 +200,13 @@ pub fn create_window(app_handle: &AppHandle) {
 
 /// save window size and position
 pub fn save_window_size_position(app_handle: &AppHandle, save_to_file: bool) -> Result<()> {
+    let verge = Config::verge();
+    let mut verge = verge.latest();
+
+    if save_to_file {
+        verge.save_file()?;
+    }
+
     let win = app_handle
         .get_window("main")
         .ok_or(anyhow::anyhow!("failed to get window"))?;
@@ -167,12 +217,8 @@ pub fn save_window_size_position(app_handle: &AppHandle, save_to_file: bool) -> 
     let pos = win.outer_position()?;
     let pos = pos.to_logical::<f64>(scale);
 
-    let verge = Config::verge();
-    let mut verge = verge.latest();
-    verge.window_size_position = Some(vec![size.width, size.height, pos.x, pos.y]);
-
-    if save_to_file {
-        verge.save_file()?;
+    if size.width >= 600.0 && size.height >= 520.0 {
+        verge.window_size_position = Some(vec![size.width, size.height, pos.x, pos.y]);
     }
 
     Ok(())

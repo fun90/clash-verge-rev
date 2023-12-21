@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useLockFn } from "ahooks";
 import {
   TextField,
   Switch,
@@ -7,9 +8,10 @@ import {
   MenuItem,
   Typography,
   IconButton,
+  Tooltip,
 } from "@mui/material";
-import { ArrowForward, Settings } from "@mui/icons-material";
-import { DialogRef } from "@/components/base";
+import { ArrowForward, Settings, Shuffle } from "@mui/icons-material";
+import { DialogRef, Notice } from "@/components/base";
 import { useClash } from "@/hooks/use-clash";
 import { GuardState } from "./mods/guard-state";
 import { WebUIViewer } from "./mods/web-ui-viewer";
@@ -20,6 +22,8 @@ import { SettingList, SettingItem } from "./mods/setting-comp";
 import { ClashCoreViewer } from "./mods/clash-core-viewer";
 import { invoke_uwp_tool } from "@/services/cmds";
 import getSystem from "@/utils/get-system";
+import { useVerge } from "@/hooks/use-verge";
+import { updateGeoData } from "@/services/api";
 
 const isWIN = getSystem() === "windows";
 
@@ -31,13 +35,15 @@ const SettingClash = ({ onError }: Props) => {
   const { t } = useTranslation();
 
   const { clash, version, mutateClash, patchClash } = useClash();
+  const { verge, mutateVerge, patchVerge } = useVerge();
+
+  const { ipv6, "allow-lan": allowLan, "log-level": logLevel } = clash ?? {};
 
   const {
-    ipv6,
-    "allow-lan": allowLan,
-    "log-level": logLevel,
-    "mixed-port": mixedPort,
-  } = clash ?? {};
+    enable_random_port = false,
+    verge_mixed_port,
+    enable_clash_fields = true,
+  } = verge ?? {};
 
   const webRef = useRef<DialogRef>(null);
   const fieldRef = useRef<DialogRef>(null);
@@ -49,6 +55,17 @@ const SettingClash = ({ onError }: Props) => {
   const onChangeData = (patch: Partial<IConfigData>) => {
     mutateClash((old) => ({ ...(old! || {}), ...patch }), false);
   };
+  const onChangeVerge = (patch: Partial<IVergeConfig>) => {
+    mutateVerge({ ...verge, ...patch }, false);
+  };
+  const onUpdateGeo = useLockFn(async () => {
+    try {
+      await updateGeoData();
+      Notice.success("Start update geodata");
+    } catch (err: any) {
+      Notice.error(err?.response.data.message || err.toString());
+    }
+  });
 
   return (
     <SettingList title={t("Clash Setting")}>
@@ -103,11 +120,32 @@ const SettingClash = ({ onError }: Props) => {
         </GuardState>
       </SettingItem>
 
-      <SettingItem label={t("Mixed Port")}>
+      <SettingItem
+        label={t("Mixed Port")}
+        extra={
+          <Tooltip title={t("Random Port")}>
+            <IconButton
+              color={enable_random_port ? "success" : "inherit"}
+              size="small"
+              onClick={() => {
+                Notice.success(t("After restart to take effect"), 1000);
+                onChangeVerge({ enable_random_port: !enable_random_port });
+                patchVerge({ enable_random_port: !enable_random_port });
+              }}
+            >
+              <Shuffle
+                fontSize="inherit"
+                style={{ cursor: "pointer", opacity: 0.75 }}
+              />
+            </IconButton>
+          </Tooltip>
+        }
+      >
         <TextField
+          disabled={enable_random_port}
           autoComplete="off"
           size="small"
-          value={mixedPort ?? 0}
+          value={verge_mixed_port ?? 7897}
           sx={{ width: 100, input: { py: "7.5px", cursor: "pointer" } }}
           onClick={(e) => {
             portRef.current?.open();
@@ -138,16 +176,18 @@ const SettingClash = ({ onError }: Props) => {
         </IconButton>
       </SettingItem>
 
-      <SettingItem label={t("Clash Field")}>
-        <IconButton
-          color="inherit"
-          size="small"
-          sx={{ my: "2px" }}
-          onClick={() => fieldRef.current?.open()}
-        >
-          <ArrowForward />
-        </IconButton>
-      </SettingItem>
+      {enable_clash_fields && (
+        <SettingItem label={t("Clash Field")}>
+          <IconButton
+            color="inherit"
+            size="small"
+            sx={{ my: "2px" }}
+            onClick={() => fieldRef.current?.open()}
+          >
+            <ArrowForward />
+          </IconButton>
+        </SettingItem>
+      )}
 
       <SettingItem
         label={t("Clash Core")}
@@ -179,6 +219,17 @@ const SettingClash = ({ onError }: Props) => {
           </IconButton>
         </SettingItem>
       )}
+
+      <SettingItem label={t("Update GeoData")}>
+        <IconButton
+          color="inherit"
+          size="small"
+          sx={{ my: "2px" }}
+          onClick={onUpdateGeo}
+        >
+          <ArrowForward />
+        </IconButton>
+      </SettingItem>
     </SettingList>
   );
 };

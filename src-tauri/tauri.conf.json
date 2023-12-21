@@ -1,7 +1,7 @@
 {
   "package": {
     "productName": "Clash Verge",
-    "version": "1.4.0"
+    "version": "1.4.5"
   },
   "build": {
     "distDir": "../dist",
@@ -10,14 +10,9 @@
     "beforeBuildCommand": "pnpm run web:build"
   },
   "tauri": {
-    "systemTray": {
-      "iconPath": "icons/tray-icon.ico",
-      "iconAsTemplate": true
-    },
     "bundle": {
       "active": true,
-      "targets": "all",
-      "identifier": "moe.elaina.clash.verge",
+      "identifier": "io.github.clash-verge-rev.clash-verge-rev",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
@@ -26,29 +21,11 @@
         "icons/icon.ico"
       ],
       "resources": ["resources"],
-      "externalBin": ["sidecar/clash-meta"],
+      "externalBin": ["sidecar/clash-meta", "sidecar/clash-meta-alpha"],
       "copyright": "© 2022 zzzgydi All Rights Reserved",
       "category": "DeveloperTool",
-      "shortDescription": "A Clash GUI based on tauri.",
-      "longDescription": "A Clash GUI based on tauri.",
-      "deb": {
-        "depends": ["openssl"]
-      },
-      "macOS": {
-        "frameworks": [],
-        "minimumSystemVersion": "",
-        "exceptionDomain": "",
-        "signingIdentity": null,
-        "entitlements": null
-      },
-      "windows": {
-        "certificateThumbprint": null,
-        "digestAlgorithm": "sha256",
-        "timestampUrl": "",
-        "wix": {
-          "language": ["zh-CN"]
-        }
-      }
+      "shortDescription": "A Clash Meta GUI based on tauri.",
+      "longDescription": "A Clash Meta GUI based on tauri."
     },
     "updater": {
       "active": true,
@@ -70,6 +47,9 @@
         "all": true
       },
       "globalShortcut": {
+        "all": true
+      },
+      "clipboard": {
         "all": true
       }
     },

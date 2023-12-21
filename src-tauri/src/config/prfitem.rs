@@ -1,4 +1,4 @@
-use crate::utils::{dirs, help, tmpl};
+use crate::utils::{dirs, help, resolve::VERSION, tmpl};
 use anyhow::{bail, Context, Result};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
@@ -96,7 +96,7 @@ impl PrfOption {
                 a.update_interval = b.update_interval.or(a.update_interval);
                 Some(a)
             }
-            t @ _ => t.0.or(t.1),
+            t => t.0.or(t.1),
         }
     }
 }
@@ -152,7 +152,7 @@ impl PrfItem {
                 let desc = item.desc.unwrap_or("".into());
                 PrfItem::from_script(name, desc)
             }
-            typ @ _ => bail!("invalid profile item type \"{typ}\""),
+            typ => bail!("invalid profile item type \"{typ}\""),
         }
     }
 
@@ -194,7 +194,10 @@ impl PrfItem {
 
         // 使用软件自己的代理
         if self_proxy {
-            let port = Config::clash().data().get_mixed_port();
+            let port = Config::verge()
+                .latest()
+                .verge_mixed_port
+                .unwrap_or(Config::clash().data().get_mixed_port());
 
             let proxy_scheme = format!("http://127.0.0.1:{port}");
 
@@ -228,8 +231,11 @@ impl PrfItem {
             };
         }
 
-        let version = unsafe { dirs::APP_VERSION };
-        let version = format!("clash-verge/{version}");
+        let version = match VERSION.get() {
+            Some(v) => format!("clash-verge/v{}", v),
+            None => format!("clash-verge/unknown"),
+        };
+
         builder = builder.user_agent(user_agent.unwrap_or(version));
 
         let resp = builder.build()?.get(url).send().await?;
@@ -245,12 +251,11 @@ impl PrfItem {
         let extra = match header.get("Subscription-Userinfo") {
             Some(value) => {
                 let sub_info = value.to_str().unwrap_or("");
-
                 Some(PrfExtra {
-                    upload: help::parse_str(sub_info, "upload=").unwrap_or(0),
-                    download: help::parse_str(sub_info, "download=").unwrap_or(0),
-                    total: help::parse_str(sub_info, "total=").unwrap_or(0),
-                    expire: help::parse_str(sub_info, "expire=").unwrap_or(0),
+                    upload: help::parse_str(sub_info, "upload").unwrap_or(0),
+                    download: help::parse_str(sub_info, "download").unwrap_or(0),
+                    total: help::parse_str(sub_info, "total").unwrap_or(0),
+                    expire: help::parse_str(sub_info, "expire").unwrap_or(0),
                 })
             }
             None => None,
@@ -259,8 +264,22 @@ impl PrfItem {
         // parse the Content-Disposition
         let filename = match header.get("Content-Disposition") {
             Some(value) => {
-                let filename = value.to_str().unwrap_or("");
-                help::parse_str::<String>(filename, "filename=")
+                let filename = format!("{value:?}");
+                let filename = filename.trim_matches('"');
+                match help::parse_str::<String>(filename, "filename*") {
+                    Some(filename) => {
+                        let iter = percent_encoding::percent_decode(filename.as_bytes());
+                        let filename = iter.decode_utf8().unwrap_or_default();
+                        filename.split("''").last().map(|s| s.to_string())
+                    }
+                    None => match help::parse_str::<String>(filename, "filename") {
+                        Some(filename) => {
+                            let filename = filename.trim_matches('"');
+                            Some(filename.to_string())
+                        }
+                        None => None,
+                    },
+                }
             }
             None => None,
         };

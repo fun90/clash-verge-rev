@@ -22,6 +22,9 @@ import { useCustomTheme } from "@/components/layout/use-custom-theme";
 import getSystem from "@/utils/get-system";
 import "dayjs/locale/ru";
 import "dayjs/locale/zh-cn";
+import { getPortableFlag } from "@/services/cmds";
+
+export let portableFlag = false;
 
 dayjs.extend(relativeTime);
 
@@ -71,6 +74,13 @@ const Layout = () => {
           break;
       }
     });
+
+    setTimeout(async () => {
+      portableFlag = await getPortableFlag();
+      await appWindow.unminimize();
+      await appWindow.show();
+      await appWindow.setFocus();
+    }, 50);
   }, []);
 
   useEffect(() => {
@@ -114,9 +124,7 @@ const Layout = () => {
             <div className="the-logo" data-windrag>
               <LogoSvg style={{ height: 90, marginTop: 10 }} />
 
-              {!(OS === "windows" && WIN_PORTABLE) && (
-                <UpdateButton className="the-newbtn" />
-              )}
+              {!portableFlag && <UpdateButton className="the-newbtn" />}
             </div>
 
             <List className="the-menu">

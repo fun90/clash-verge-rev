@@ -3,6 +3,10 @@ use nanoid::nanoid;
 use serde::{de::DeserializeOwned, Serialize};
 use serde_yaml::{Mapping, Value};
 use std::{fs, path::PathBuf, str::FromStr};
+use tauri::{
+    api::shell::{open, Program},
+    Manager,
+};
 
 /// read data from yaml as struct T
 pub fn read_yaml<T: DeserializeOwned>(path: &PathBuf) -> Result<T> {
@@ -67,32 +71,31 @@ pub fn get_uid(prefix: &str) -> String {
 /// parse the string
 /// xxx=123123; => 123123
 pub fn parse_str<T: FromStr>(target: &str, key: &str) -> Option<T> {
-    target.find(key).and_then(|idx| {
-        let idx = idx + key.len();
-        let value = &target[idx..];
-
-        match value.split(';').nth(0) {
-            Some(value) => value.trim().parse(),
-            None => value.trim().parse(),
+    target.split(';').map(str::trim).find_map(|s| {
+        let mut parts = s.splitn(2, '=');
+        match (parts.next(), parts.next()) {
+            (Some(k), Some(v)) if k == key => v.parse::<T>().ok(),
+            _ => None,
         }
-        .ok()
     })
 }
 
 /// open file
 /// use vscode by default
-pub fn open_file(path: PathBuf) -> Result<()> {
+pub fn open_file(app: tauri::AppHandle, path: PathBuf) -> Result<()> {
     #[cfg(target_os = "macos")]
     let code = "Visual Studio Code";
     #[cfg(not(target_os = "macos"))]
     let code = "code";
 
-    // use vscode first
-    if let Err(err) = open::with(&path, code) {
-        log::error!(target: "app", "failed to open file with VScode `{err}`");
-        // default open
-        open::that(path)?;
-    }
+    let _ = match Program::from_str(code) {
+        Ok(code) => open(&app.shell_scope(), &path.to_string_lossy(), Some(code)),
+        Err(err) => {
+            log::error!(target: "app", "Can't find VScode `{err}`");
+            // default open
+            open(&app.shell_scope(), &path.to_string_lossy(), None)
+        }
+    };
 
     Ok(())
 }
@@ -156,17 +159,17 @@ fn test_parse_value() {
     let test_1 = "upload=111; download=2222; total=3333; expire=444";
     let test_2 = "attachment; filename=Clash.yaml";
 
-    assert_eq!(parse_str::<usize>(test_1, "upload=").unwrap(), 111);
-    assert_eq!(parse_str::<usize>(test_1, "download=").unwrap(), 2222);
-    assert_eq!(parse_str::<usize>(test_1, "total=").unwrap(), 3333);
-    assert_eq!(parse_str::<usize>(test_1, "expire=").unwrap(), 444);
+    assert_eq!(parse_str::<usize>(test_1, "upload").unwrap(), 111);
+    assert_eq!(parse_str::<usize>(test_1, "download").unwrap(), 2222);
+    assert_eq!(parse_str::<usize>(test_1, "total").unwrap(), 3333);
+    assert_eq!(parse_str::<usize>(test_1, "expire").unwrap(), 444);
     assert_eq!(
-        parse_str::<String>(test_2, "filename=").unwrap(),
+        parse_str::<String>(test_2, "filename").unwrap(),
         format!("Clash.yaml")
     );
 
-    assert_eq!(parse_str::<usize>(test_1, "aaa="), None);
-    assert_eq!(parse_str::<usize>(test_1, "upload1="), None);
-    assert_eq!(parse_str::<usize>(test_1, "expire1="), None);
-    assert_eq!(parse_str::<usize>(test_2, "attachment="), None);
+    assert_eq!(parse_str::<usize>(test_1, "aaa"), None);
+    assert_eq!(parse_str::<usize>(test_1, "upload1"), None);
+    assert_eq!(parse_str::<usize>(test_1, "expire1"), None);
+    assert_eq!(parse_str::<usize>(test_2, "attachment"), None);
 }

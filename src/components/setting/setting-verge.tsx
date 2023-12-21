@@ -18,6 +18,7 @@ import { GuardState } from "./mods/guard-state";
 import { LayoutViewer } from "./mods/layout-viewer";
 import { UpdateViewer } from "./mods/update-viewer";
 import getSystem from "@/utils/get-system";
+import { portableFlag } from "@/pages/_layout";
 
 interface Props {
   onError?: (err: Error) => void;
@@ -29,8 +30,7 @@ const SettingVerge = ({ onError }: Props) => {
   const { t } = useTranslation();
 
   const { verge, patchVerge, mutateVerge } = useVerge();
-  const { theme_mode, language } = verge ?? {};
-
+  const { theme_mode, language, tray_event, env_type } = verge ?? {};
   const configRef = useRef<DialogRef>(null);
   const hotkeyRef = useRef<DialogRef>(null);
   const miscRef = useRef<DialogRef>(null);
@@ -88,6 +88,41 @@ const SettingVerge = ({ onError }: Props) => {
           onGuard={(e) => patchVerge({ theme_mode: e })}
         >
           <ThemeModeSwitch />
+        </GuardState>
+      </SettingItem>
+
+      {OS !== "linux" && (
+        <SettingItem label={t("Tray Click Event")}>
+          <GuardState
+            value={tray_event ?? "main_window"}
+            onCatch={onError}
+            onFormat={(e: any) => e.target.value}
+            onChange={(e) => onChangeData({ tray_event: e })}
+            onGuard={(e) => patchVerge({ tray_event: e })}
+          >
+            <Select size="small" sx={{ width: 140, "> div": { py: "7.5px" } }}>
+              <MenuItem value="main_window">{t("Show Main Window")}</MenuItem>
+              <MenuItem value="system_proxy">{t("System Proxy")}</MenuItem>
+              <MenuItem value="tun_mode">{t("Tun Mode")}</MenuItem>
+              <MenuItem value="disable">{t("Disable")}</MenuItem>
+            </Select>
+          </GuardState>
+        </SettingItem>
+      )}
+
+      <SettingItem label={t("Copy Env Type")}>
+        <GuardState
+          value={env_type ?? (OS === "windows" ? "powershell" : "bash")}
+          onCatch={onError}
+          onFormat={(e: any) => e.target.value}
+          onChange={(e) => onChangeData({ env_type: e })}
+          onGuard={(e) => patchVerge({ env_type: e })}
+        >
+          <Select size="small" sx={{ width: 140, "> div": { py: "7.5px" } }}>
+            <MenuItem value="bash">Bash</MenuItem>
+            <MenuItem value="cmd">CMD</MenuItem>
+            <MenuItem value="powershell">PowerShell</MenuItem>
+          </Select>
         </GuardState>
       </SettingItem>
 
@@ -179,7 +214,7 @@ const SettingVerge = ({ onError }: Props) => {
         </IconButton>
       </SettingItem>
 
-      {!(OS === "windows" && WIN_PORTABLE) && (
+      {!portableFlag && (
         <SettingItem label={t("Check for Updates")}>
           <IconButton
             color="inherit"
