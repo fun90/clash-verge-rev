@@ -122,7 +122,7 @@ const Layout = () => {
         >
           <div className="layout__left" data-windrag>
             <div className="the-logo" data-windrag>
-              <LogoSvg style={{ height: 90, marginTop: 10 }} />
+              <LogoSvg />
 
               {!portableFlag && <UpdateButton className="the-newbtn" />}
             </div>
