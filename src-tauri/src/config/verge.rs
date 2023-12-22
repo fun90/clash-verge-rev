@@ -156,6 +156,7 @@ impl IVerge {
             auto_log_clean: Some(1),
             web_ui_list: Some(vec!["https://yacd.metacubex.one/?host=%host&port=%port&secret=%secret".into()]),
             app_log_level: Some("error".into()),
+            tray_event: Some("disable".into()),
             ..Self::default()
         }
     }

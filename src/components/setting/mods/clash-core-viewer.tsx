@@ -20,7 +20,7 @@ import { grantPermission } from "@/services/cmds";
 import getSystem from "@/utils/get-system";
 
 const VALID_CORE = [
-  // { name: "Clash", core: "clash" },
+  { name: "Clash Meta", core: "clash-meta" },
   { name: "Clash Meta Alpha", core: "clash-meta-alpha" },
 ];
 
