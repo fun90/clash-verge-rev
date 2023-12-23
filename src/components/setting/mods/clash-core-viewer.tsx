@@ -21,7 +21,7 @@ import getSystem from "@/utils/get-system";
 
 const VALID_CORE = [
   { name: "Clash Meta", core: "clash-meta" },
-  { name: "Clash Meta Alpha", core: "clash-meta-alpha" },
+  // { name: "Clash Meta Alpha", core: "clash-meta-alpha" },
 ];
 
 const OS = getSystem();
