@@ -28,11 +28,11 @@ A Clash Meta GUI based on <a href="https://github.com/tauri-apps/tauri">Tauri</a
 
 Download from [release](https://github.com/fun90/clash-verge-rev/releases). Supports Windows x64, Linux x86_64 and macOS 11+
 
-- [Windows x64](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.0/Clash.Verge_1.4.0_x64_zh-CN.msi)
-- [macOS intel](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.0/Clash.Verge_1.4.0_x64.dmg)
-- [macOS arm](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.0/Clash.Verge_1.4.0_aarch64.dmg)
-- [Linux AppImage](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.0/clash-verge_1.4.0_amd64.AppImage)
-- [Linux deb](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.0/clash-verge_1.4.0_amd64.deb)
+- [Windows x64](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.5/Clash.Verge_1.4.5_x64-setup.exe)
+- [macOS intel](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.5/Clash.Verge_1.4.5_x64.dmg)
+- [macOS arm](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.5/Clash.Verge_1.4.5_aarch64.dmg)
+- [Linux AppImage](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.5/clash-verge_1.4.5_amd64.AppImage)
+- [Linux deb](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.5/clash-verge_1.4.5_amd64.deb)
 
 Or you can build it yourself. Supports Windows, Linux and macOS 10.15+
 
