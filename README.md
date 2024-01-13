@@ -12,7 +12,7 @@ A Clash Meta GUI based on <a href="https://github.com/tauri-apps/tauri">Tauri</a
 ## Features
 
 - Since the clash core has been removed. The project no longer maintains the clash core, but only the Clash Meta core.
-- Profiles management and enhancement (by yaml and Javascript). [Doc](https://github.com/clash-verge-rev/clash-verge-rev/wiki/%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97)
+- Profiles management and enhancement (by yaml and Javascript). [Doc](https://clash-verge-rev.github.io)
 - Simple UI and supports custom theme color.
 - Built-in support [Clash.Meta(mihomo)](https://github.com/MetaCubeX/mihomo) core.
 - System proxy setting and guard.
@@ -26,13 +26,20 @@ A Clash Meta GUI based on <a href="https://github.com/tauri-apps/tauri">Tauri</a
 
 ## Install
 
-Download from [release](https://github.com/fun90/clash-verge-rev/releases). Supports Windows x64, Linux x86_64 and macOS 11+
+Download from [release](https://github.com/fun90/clash-verge-rev/releases). Supports Windows (x64/x86), Linux (x64/arm64) and macOS 10.15+ (intel/apple).
 
-- [Windows x64](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.5/Clash.Verge_1.4.5_x64-setup.exe)
-- [macOS intel](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.5/Clash.Verge_1.4.5_x64.dmg)
-- [macOS arm](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.5/Clash.Verge_1.4.5_aarch64.dmg)
-- [Linux AppImage](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.5/clash-verge_1.4.5_amd64.AppImage)
-- [Linux deb](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.5/clash-verge_1.4.5_amd64.deb)
+- [Windows x64](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/Clash.Verge_1.4.7_x64-setup.exe)
+- [Windows x86](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/Clash.Verge_1.4.7_x86-setup.exe)
+- [Windows arm64](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/Clash.Verge_1.4.7_arm64-setup.exe)
+
+- [macOS intel](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/Clash.Verge_1.4.7_x64.dmg)
+- [macOS apple](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/Clash.Verge_1.4.7_aarch64.dmg)
+
+- [Linux x64 AppImage](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/clash-verge_1.4.7_amd64.AppImage)
+- [Linux x64 deb](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/clash-verge_1.4.7_amd64.deb)
+- [Linux x86 AppImage](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/clash-verge_1.4.7_i386.AppImage)
+- [Linux x86 deb](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/clash-verge_1.4.7_i386.deb)
+- [Linux arm64 deb](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/clash-verge_1.4.7_arm64.deb)
 
 Or you can build it yourself. Supports Windows, Linux and macOS 10.15+
 
@@ -52,7 +59,7 @@ You should install Rust and Nodejs, see [here](https://tauri.app/v1/guides/getti
 pnpm i
 ```
 
-Then download the clash binary... Or you can download it from [clash meta release](https://github.com/MetaCubeX/Clash.Meta/releases) and rename it according to [tauri config](https://tauri.studio/docs/api/config/#tauri.bundle.externalBin).
+Then download the clash binary... Or you can download it from [clash meta release](https://github.com/MetaCubeX/Clash.Meta/releases) and rename it according to [tauri config](https://tauri.app/v1/api/config#bundleconfig.externalbin).
 
 ```shell
 # force update to latest version

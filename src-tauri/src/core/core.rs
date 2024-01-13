@@ -5,7 +5,7 @@ use anyhow::{bail, Context, Result};
 use once_cell::sync::OnceCell;
 use parking_lot::Mutex;
 use std::{fs, io::Write, sync::Arc, time::Duration};
-use sysinfo::{Pid, PidExt, ProcessExt, System, SystemExt};
+use sysinfo::{Pid, System};
 use tauri::api::process::{Command, CommandChild, CommandEvent};
 use tokio::time::sleep;
 
@@ -35,12 +35,12 @@ impl CoreManager {
             .map(|pid| {
                 let mut system = System::new();
                 system.refresh_all();
-                system.process(Pid::from_u32(pid)).map(|proc| {
+                if let Some(proc) = system.process(Pid::from_u32(pid)) {
                     if proc.name().contains("clash") {
                         log::debug!(target: "app", "kill old clash process");
                         proc.kill();
                     }
-                });
+                }
             });
 
         tauri::async_runtime::spawn(async {
@@ -68,7 +68,7 @@ impl CoreManager {
 
         if !output.status.success() {
             let error = clash_api::parse_check_output(output.stdout.clone());
-            let error = match error.len() > 0 {
+            let error = match !error.is_empty() {
                 true => error,
                 false => output.stdout.clone(),
             };
@@ -110,7 +110,7 @@ impl CoreManager {
             use super::win_service;
 
             // 服务模式
-            let enable = { Config::verge().latest().enable_service_mode.clone() };
+            let enable = { Config::verge().latest().enable_service_mode };
             let enable = enable.unwrap_or(false);
 
             *self.use_service_mode.lock() = enable;
