@@ -102,6 +102,12 @@ impl Sysopt {
         sysproxy.enable = enable;
         sysproxy.bypass = bypass.unwrap_or(DEFAULT_BYPASS.into());
 
+        let port = Config::verge()
+            .latest()
+            .verge_mixed_port
+            .unwrap_or(Config::clash().data().get_mixed_port());
+        sysproxy.port = port;
+
         sysproxy.set_system_proxy()?;
         *cur_sysproxy = Some(sysproxy);
 

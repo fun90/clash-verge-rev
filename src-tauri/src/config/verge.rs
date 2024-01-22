@@ -19,15 +19,16 @@ pub struct IVerge {
     /// `light` or `dark` or `system`
     pub theme_mode: Option<String>,
 
-    /// enable blur mode
-    /// maybe be able to set the alpha
-    pub theme_blur: Option<bool>,
-
     /// tray click event
     pub tray_event: Option<String>,
 
     /// copy env type
     pub env_type: Option<String>,
+
+    /// start page
+    pub start_page: Option<String>,
+    /// startup script path
+    pub startup_script: Option<String>,
 
     /// enable traffic graph default is true
     pub traffic_graph: Option<bool>,
@@ -89,6 +90,9 @@ pub struct IVerge {
     /// proxy 页面布局 列数
     pub proxy_layout_column: Option<i32>,
 
+    /// 测试网站列表
+    pub test_list: Option<Vec<IVergeTestItem>>,
+
     /// 日志清理
     /// 0: 不清理; 1: 7天; 2: 30天; 3: 90天
     pub auto_log_clean: Option<i32>,
@@ -102,6 +106,14 @@ pub struct IVerge {
 
     /// verge mixed port 用于覆盖 clash 的 mixed port
     pub verge_mixed_port: Option<u16>,
+}
+
+#[derive(Default, Debug, Clone, Deserialize, Serialize)]
+pub struct IVergeTestItem {
+    pub uid: Option<String>,
+    pub name: Option<String>,
+    pub icon: Option<String>,
+    pub url: Option<String>,
 }
 
 #[derive(Default, Debug, Clone, Deserialize, Serialize)]
@@ -140,7 +152,7 @@ impl IVerge {
             env_type: Some("bash".into()),
             #[cfg(target_os = "windows")]
             env_type: Some("powershell".into()),
-            theme_blur: Some(false),
+            start_page: Some("/".into()),
             traffic_graph: Some(true),
             enable_memory_usage: Some(true),
             enable_auto_launch: Some(true),
@@ -180,9 +192,10 @@ impl IVerge {
         patch!(app_log_level);
         patch!(language);
         patch!(theme_mode);
-        patch!(theme_blur);
         patch!(tray_event);
         patch!(env_type);
+        patch!(start_page);
+        patch!(startup_script);
         patch!(traffic_graph);
         patch!(enable_memory_usage);
 
@@ -206,6 +219,7 @@ impl IVerge {
         patch!(default_latency_test);
         patch!(enable_builtin_enhanced);
         patch!(proxy_layout_column);
+        patch!(test_list);
         patch!(enable_clash_fields);
         patch!(auto_log_clean);
         patch!(window_size_position);

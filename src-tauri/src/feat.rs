@@ -225,6 +225,7 @@ pub async fn patch_verge(patch: IVerge) -> Result<()> {
     let system_proxy = patch.enable_system_proxy;
     let proxy_bypass = patch.system_proxy_bypass;
     let language = patch.language;
+    let port = patch.verge_mixed_port;
 
     match {
         #[cfg(target_os = "windows")]
@@ -249,7 +250,7 @@ pub async fn patch_verge(patch: IVerge) -> Result<()> {
         if auto_launch.is_some() {
             sysopt::Sysopt::global().update_launch()?;
         }
-        if system_proxy.is_some() || proxy_bypass.is_some() {
+        if system_proxy.is_some() || proxy_bypass.is_some() || port.is_some() {
             sysopt::Sysopt::global().update_sysproxy()?;
             sysopt::Sysopt::global().guard_proxy();
         }
@@ -367,4 +368,43 @@ pub fn copy_clash_env(app_handle: &AppHandle) {
         "powershell" => cliboard.write_text(ps).unwrap_or_default(),
         _ => log::error!(target: "app", "copy_clash_env: Invalid env type! {env_type}"),
     };
+}
+
+pub async fn test_delay(url: String) -> Result<u32> {
+    use tokio::time::{Duration, Instant};
+    let mut builder = reqwest::ClientBuilder::new().use_rustls_tls().no_proxy();
+
+    let port = Config::verge()
+        .latest()
+        .verge_mixed_port
+        .unwrap_or(Config::clash().data().get_mixed_port());
+    let tun_mode = Config::verge().latest().enable_tun_mode.unwrap_or(false);
+
+    let proxy_scheme = format!("http://127.0.0.1:{port}");
+
+    if !tun_mode {
+        if let Ok(proxy) = reqwest::Proxy::http(&proxy_scheme) {
+            builder = builder.proxy(proxy);
+        }
+        if let Ok(proxy) = reqwest::Proxy::https(&proxy_scheme) {
+            builder = builder.proxy(proxy);
+        }
+        if let Ok(proxy) = reqwest::Proxy::all(&proxy_scheme) {
+            builder = builder.proxy(proxy);
+        }
+    }
+
+    let request = builder
+        .timeout(Duration::from_millis(10000))
+        .build()?
+        .get(url).header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0");
+    let start = Instant::now();
+
+    let response = request.send().await?;
+    if response.status().is_success() {
+        let delay = start.elapsed().as_millis() as u32;
+        Ok(delay)
+    } else {
+        Ok(10000u32)
+    }
 }

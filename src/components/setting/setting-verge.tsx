@@ -1,10 +1,19 @@
 import { useRef } from "react";
 import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
-import { IconButton, MenuItem, Select, Typography } from "@mui/material";
+import { open } from "@tauri-apps/api/dialog";
+import {
+  Button,
+  IconButton,
+  MenuItem,
+  Select,
+  Input,
+  Typography,
+} from "@mui/material";
 import { openAppDir, openCoreDir, openLogsDir } from "@/services/cmds";
 import { ArrowForward } from "@mui/icons-material";
 import { checkUpdate } from "@tauri-apps/api/updater";
+import { exit } from "@tauri-apps/api/process";
 import { useVerge } from "@/hooks/use-verge";
 import { version } from "@root/package.json";
 import { DialogRef, Notice } from "@/components/base";
@@ -18,8 +27,7 @@ import { GuardState } from "./mods/guard-state";
 import { LayoutViewer } from "./mods/layout-viewer";
 import { UpdateViewer } from "./mods/update-viewer";
 import getSystem from "@/utils/get-system";
-import { portableFlag } from "@/pages/_layout";
-
+import { routers } from "@/pages/_routers";
 interface Props {
   onError?: (err: Error) => void;
 }
@@ -30,7 +38,14 @@ const SettingVerge = ({ onError }: Props) => {
   const { t } = useTranslation();
 
   const { verge, patchVerge, mutateVerge } = useVerge();
-  const { theme_mode, language, tray_event, env_type } = verge ?? {};
+  const {
+    theme_mode,
+    language,
+    tray_event,
+    env_type,
+    startup_script,
+    start_page,
+  } = verge ?? {};
   const configRef = useRef<DialogRef>(null);
   const hotkeyRef = useRef<DialogRef>(null);
   const miscRef = useRef<DialogRef>(null);
@@ -126,6 +141,70 @@ const SettingVerge = ({ onError }: Props) => {
         </GuardState>
       </SettingItem>
 
+      <SettingItem label={t("Start Page")}>
+        <GuardState
+          value={start_page ?? "/"}
+          onCatch={onError}
+          onFormat={(e: any) => e.target.value}
+          onChange={(e) => onChangeData({ start_page: e })}
+          onGuard={(e) => patchVerge({ start_page: e })}
+        >
+          <Select size="small" sx={{ width: 140, "> div": { py: "7.5px" } }}>
+            {routers.map((page: { label: string; link: string }) => {
+              return <MenuItem value={page.link}>{t(page.label)}</MenuItem>;
+            })}
+          </Select>
+        </GuardState>
+      </SettingItem>
+
+      <SettingItem label={t("Startup Script")}>
+        <GuardState
+          value={startup_script ?? ""}
+          onCatch={onError}
+          onFormat={(e: any) => e.target.value}
+          onChange={(e) => onChangeData({ startup_script: e })}
+          onGuard={(e) => patchVerge({ startup_script: e })}
+        >
+          <Input
+            value={startup_script}
+            disabled
+            endAdornment={
+              <>
+                <Button
+                  onClick={async () => {
+                    const path = await open({
+                      directory: false,
+                      multiple: false,
+                      filters: [
+                        {
+                          name: "Shell Script",
+                          extensions: ["sh", "bat", "ps1"],
+                        },
+                      ],
+                    });
+                    if (path?.length) {
+                      onChangeData({ startup_script: `${path}` });
+                      patchVerge({ startup_script: `${path}` });
+                    }
+                  }}
+                >
+                  {t("Browse")}
+                </Button>
+                {startup_script && (
+                  <Button
+                    onClick={async () => {
+                      onChangeData({ startup_script: "" });
+                      patchVerge({ startup_script: "" });
+                    }}
+                  >
+                    {t("Clear")}
+                  </Button>
+                )}
+              </>
+            }
+          ></Input>
+        </GuardState>
+      </SettingItem>
       <SettingItem label={t("Theme Setting")}>
         <IconButton
           color="inherit"
@@ -214,18 +293,29 @@ const SettingVerge = ({ onError }: Props) => {
         </IconButton>
       </SettingItem>
 
-      {!portableFlag && (
-        <SettingItem label={t("Check for Updates")}>
-          <IconButton
-            color="inherit"
-            size="small"
-            sx={{ my: "2px" }}
-            onClick={onCheckUpdate}
-          >
-            <ArrowForward />
-          </IconButton>
-        </SettingItem>
-      )}
+      <SettingItem label={t("Check for Updates")}>
+        <IconButton
+          color="inherit"
+          size="small"
+          sx={{ my: "2px" }}
+          onClick={onCheckUpdate}
+        >
+          <ArrowForward />
+        </IconButton>
+      </SettingItem>
+
+      <SettingItem label={t("Exit")}>
+        <IconButton
+          color="inherit"
+          size="small"
+          sx={{ my: "2px" }}
+          onClick={() => {
+            exit(0);
+          }}
+        >
+          <ArrowForward />
+        </IconButton>
+      </SettingItem>
 
       <SettingItem label={t("Verge Version")}>
         <Typography sx={{ py: "7px", pr: 1 }}>v{version}</Typography>

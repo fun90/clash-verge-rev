@@ -23,7 +23,7 @@ import getSystem from "@/utils/get-system";
 import "dayjs/locale/ru";
 import "dayjs/locale/zh-cn";
 import { getPortableFlag } from "@/services/cmds";
-
+import { useNavigate } from "react-router-dom";
 export let portableFlag = false;
 
 dayjs.extend(relativeTime);
@@ -36,8 +36,8 @@ const Layout = () => {
   const { theme } = useCustomTheme();
 
   const { verge } = useVerge();
-  const { theme_blur, language } = verge || {};
-
+  const { language, start_page } = verge || {};
+  const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
@@ -54,7 +54,7 @@ const Layout = () => {
       mutate("getProxies");
       mutate("getVersion");
       mutate("getClashConfig");
-      mutate("getProviders");
+      mutate("getProxyProviders");
     });
 
     // update the verge config
@@ -88,7 +88,10 @@ const Layout = () => {
       dayjs.locale(language === "zh" ? "zh-cn" : language);
       i18next.changeLanguage(language);
     }
-  }, [language]);
+    if (start_page) {
+      navigate(start_page);
+    }
+  }, [language, start_page]);
 
   return (
     <SWRConfig value={{ errorRetryCount: 3 }}>
@@ -116,7 +119,7 @@ const Layout = () => {
           }}
           sx={[
             ({ palette }) => ({
-              bgcolor: alpha(palette.background.paper, theme_blur ? 0.8 : 1),
+              bgcolor: palette.background.paper,
             }),
           ]}
         >

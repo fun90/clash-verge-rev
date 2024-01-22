@@ -28,18 +28,18 @@ A Clash Meta GUI based on <a href="https://github.com/tauri-apps/tauri">Tauri</a
 
 Download from [release](https://github.com/fun90/clash-verge-rev/releases). Supports Windows (x64/x86), Linux (x64/arm64) and macOS 10.15+ (intel/apple).
 
-- [Windows x64](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/Clash.Verge_1.4.7_x64-setup.exe)
-- [Windows x86](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/Clash.Verge_1.4.7_x86-setup.exe)
-- [Windows arm64](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/Clash.Verge_1.4.7_arm64-setup.exe)
+- [Windows x64](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.10/Clash.Verge_1.4.10_x64-setup.exe)
+- [Windows x86](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.10/Clash.Verge_1.4.10_x86-setup.exe)
+- [Windows arm64](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.10/Clash.Verge_1.4.10_arm64-setup.exe)
 
-- [macOS intel](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/Clash.Verge_1.4.7_x64.dmg)
-- [macOS apple](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/Clash.Verge_1.4.7_aarch64.dmg)
+- [macOS intel](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.10/Clash.Verge_1.4.10_x64.dmg)
+- [macOS apple](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.10/Clash.Verge_1.4.10_aarch64.dmg)
 
-- [Linux x64 AppImage](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/clash-verge_1.4.7_amd64.AppImage)
-- [Linux x64 deb](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/clash-verge_1.4.7_amd64.deb)
-- [Linux x86 AppImage](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/clash-verge_1.4.7_i386.AppImage)
-- [Linux x86 deb](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/clash-verge_1.4.7_i386.deb)
-- [Linux arm64 deb](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.7/clash-verge_1.4.7_arm64.deb)
+- [Linux x64 AppImage](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.10/clash-verge_1.4.10_amd64.AppImage)
+- [Linux x64 deb](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.10/clash-verge_1.4.10_amd64.deb)
+- [Linux x86 AppImage](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.10/clash-verge_1.4.10_i386.AppImage)
+- [Linux x86 deb](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.10/clash-verge_1.4.10_i386.deb)
+- [Linux arm64 deb](https://github.com/fun90/clash-verge-rev/releases/download/v1.4.10/clash-verge_1.4.10_arm64.deb)
 
 Or you can build it yourself. Supports Windows, Linux and macOS 10.15+
 
@@ -53,34 +53,14 @@ open the terminal and run `sudo xattr -r -d com.apple.quarantine /Applications/C
 
 ## Development
 
-You should install Rust and Nodejs, see [here](https://tauri.app/v1/guides/getting-started/prerequisites) for more details. Then install Nodejs packages.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for more details.
+
+To run the development server, execute the following commands after all prerequisites for **Tauri** are installed:
 
 ```shell
 pnpm i
-```
-
-Then download the clash binary... Or you can download it from [clash meta release](https://github.com/MetaCubeX/Clash.Meta/releases) and rename it according to [tauri config](https://tauri.app/v1/api/config#bundleconfig.externalbin).
-
-```shell
-# force update to latest version
-# pnpm run check --force
-
 pnpm run check
-```
-
-Then run
-
-```shell
 pnpm dev
-
-# run it in another way if app instance exists
-pnpm dev:diff
-```
-
-Or you can build it
-
-```shell
-pnpm build
 ```
 
 ## Todos

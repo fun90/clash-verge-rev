@@ -1,6 +1,6 @@
 [package]
 name = "clash-verge"
-version = "1.4.7"
+version = "1.4.10"
 description = "clash verge"
 authors = ["zzzgydi", "wonfen", "MystiPanda"]
 license = "GPL-3.0"
@@ -14,7 +14,6 @@ tauri-build = { version = "1", features = [] }
 
 [dependencies]
 warp = "0.3"
-sysproxy = "0.3.0"
 which = "5.0.0"
 anyhow = "1.0"
 dirs = "5.0"
@@ -39,7 +38,8 @@ window-shadows = { version = "0.2" }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 reqwest = { version = "0.11", features = ["json", "rustls-tls"] }
-tauri = { version = "1.5", features = [ "notification-all", "icon-png", "clipboard-all", "global-shortcut-all", "process-all", "shell-all", "system-tray", "updater", "window-all"] }
+sysproxy = { git="https://github.com/zzzgydi/sysproxy-rs", branch = "main" }
+tauri = { version = "1.5", features = [ "dialog-open", "notification-all", "icon-png", "clipboard-all", "global-shortcut-all", "process-all", "shell-all", "system-tray", "updater", "window-all"] }
 
 [target.'cfg(windows)'.dependencies]
 runas = "=1.0.0" # 高版本会返回错误 Status

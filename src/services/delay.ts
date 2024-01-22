@@ -109,7 +109,7 @@ class DelayManager {
   }
 
   formatDelay(delay: number) {
-    if (delay < 0) return "-";
+    if (delay <= 0) return "Error";
     if (delay > 1e5) return "Error";
     if (delay >= 10000) return "Timeout"; // 10s
     return `${delay}`;
@@ -117,9 +117,8 @@ class DelayManager {
 
   formatDelayColor(delay: number) {
     if (delay >= 10000) return "error.main";
-    /*if (delay <= 0) return "text.secondary";
+    if (delay <= 0) return "error.main";
     if (delay > 500) return "warning.main";
-    if (delay > 100) return "text.secondary";*/
     return "success.main";
   }
 }
