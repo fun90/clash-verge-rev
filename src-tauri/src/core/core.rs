@@ -1,3 +1,4 @@
+use super::service;
 use super::{clash_api, logger::Logger};
 use crate::log_err;
 use crate::{config::*, utils::dirs};
@@ -93,10 +94,9 @@ impl CoreManager {
             None => false,
         };
 
-        #[cfg(target_os = "windows")]
         if *self.use_service_mode.lock() {
             log::debug!(target: "app", "stop the core by service");
-            log_err!(super::win_service::stop_core_by_service().await);
+            log_err!(service::stop_core_by_service().await);
             should_kill = true;
         }
 
@@ -105,32 +105,27 @@ impl CoreManager {
             sleep(Duration::from_millis(500)).await;
         }
 
-        #[cfg(target_os = "windows")]
-        {
-            use super::win_service;
+        // 服务模式
+        let enable = { Config::verge().latest().enable_service_mode };
+        let enable = enable.unwrap_or(false);
 
-            // 服务模式
-            let enable = { Config::verge().latest().enable_service_mode };
-            let enable = enable.unwrap_or(false);
+        *self.use_service_mode.lock() = enable;
 
-            *self.use_service_mode.lock() = enable;
+        if enable {
+            // 服务模式启动失败就直接运行sidecar
+            log::debug!(target: "app", "try to run core in service mode");
 
-            if enable {
-                // 服务模式启动失败就直接运行sidecar
-                log::debug!(target: "app", "try to run core in service mode");
-
-                match (|| async {
-                    win_service::check_service().await?;
-                    win_service::run_core_by_service(&config_path).await
-                })()
-                .await
-                {
-                    Ok(_) => return Ok(()),
-                    Err(err) => {
-                        // 修改这个值，免得stop出错
-                        *self.use_service_mode.lock() = false;
-                        log::error!(target: "app", "{err}");
-                    }
+            match (|| async {
+                service::check_service().await?;
+                service::run_core_by_service(&config_path).await
+            })()
+            .await
+            {
+                Ok(_) => return Ok(()),
+                Err(err) => {
+                    // 修改这个值，免得stop出错
+                    *self.use_service_mode.lock() = false;
+                    log::error!(target: "app", "{err}");
                 }
             }
         }
@@ -144,10 +139,9 @@ impl CoreManager {
 
         let config_path = dirs::path_to_str(&config_path)?;
 
-        // fix #212
         let args = match clash_core.as_str() {
-            "clash-meta" => vec!["-m", "-d", app_dir, "-f", config_path],
-            "clash-meta-alpha" => vec!["-m", "-d", app_dir, "-f", config_path],
+            "clash-meta" => vec!["-d", app_dir, "-f", config_path],
+            "clash-meta-alpha" => vec!["-d", app_dir, "-f", config_path],
             _ => vec!["-d", app_dir, "-f", config_path],
         };
 
@@ -206,7 +200,6 @@ impl CoreManager {
     /// 重启内核
     pub fn recover_core(&'static self) -> Result<()> {
         // 服务模式不管
-        #[cfg(target_os = "windows")]
         if *self.use_service_mode.lock() {
             return Ok(());
         }
@@ -239,11 +232,10 @@ impl CoreManager {
 
     /// 停止核心运行
     pub fn stop_core(&self) -> Result<()> {
-        #[cfg(target_os = "windows")]
         if *self.use_service_mode.lock() {
             log::debug!(target: "app", "stop the core by service");
             tauri::async_runtime::block_on(async move {
-                log_err!(super::win_service::stop_core_by_service().await);
+                log_err!(service::stop_core_by_service().await);
             });
             return Ok(());
         }
@@ -259,7 +251,7 @@ impl CoreManager {
     /// 切换核心
     pub async fn change_core(&self, clash_core: Option<String>) -> Result<()> {
         let clash_core = clash_core.ok_or(anyhow::anyhow!("clash core is null"))?;
-        const CLASH_CORES: [&str; 3] = ["clash", "clash-meta", "clash-meta-alpha"];
+        const CLASH_CORES: [&str; 2] = ["clash-meta", "clash-meta-alpha"];
 
         if !CLASH_CORES.contains(&clash_core.as_str()) {
             bail!("invalid clash core name \"{clash_core}\"");

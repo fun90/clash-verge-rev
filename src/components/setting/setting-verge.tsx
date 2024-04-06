@@ -10,10 +10,15 @@ import {
   Input,
   Typography,
 } from "@mui/material";
-import { openAppDir, openCoreDir, openLogsDir } from "@/services/cmds";
+import {
+  exitApp,
+  openAppDir,
+  openCoreDir,
+  openLogsDir,
+  openDevTools,
+} from "@/services/cmds";
 import { ArrowForward } from "@mui/icons-material";
 import { checkUpdate } from "@tauri-apps/api/updater";
-import { exit } from "@tauri-apps/api/process";
 import { useVerge } from "@/hooks/use-verge";
 import { version } from "@root/package.json";
 import { DialogRef, Notice } from "@/components/base";
@@ -28,6 +33,7 @@ import { LayoutViewer } from "./mods/layout-viewer";
 import { UpdateViewer } from "./mods/update-viewer";
 import getSystem from "@/utils/get-system";
 import { routers } from "@/pages/_routers";
+
 interface Props {
   onError?: (err: Error) => void;
 }
@@ -91,6 +97,7 @@ const SettingVerge = ({ onError }: Props) => {
             <MenuItem value="zh">中文</MenuItem>
             <MenuItem value="en">English</MenuItem>
             <MenuItem value="ru">Русский</MenuItem>
+            <MenuItem value="fa">فارسی</MenuItem>
           </Select>
         </GuardState>
       </SettingItem>
@@ -150,8 +157,8 @@ const SettingVerge = ({ onError }: Props) => {
           onGuard={(e) => patchVerge({ start_page: e })}
         >
           <Select size="small" sx={{ width: 140, "> div": { py: "7.5px" } }}>
-            {routers.map((page: { label: string; link: string }) => {
-              return <MenuItem value={page.link}>{t(page.label)}</MenuItem>;
+            {routers.map((page: { label: string; path: string }) => {
+              return <MenuItem value={page.path}>{t(page.label)}</MenuItem>;
             })}
           </Select>
         </GuardState>
@@ -168,6 +175,7 @@ const SettingVerge = ({ onError }: Props) => {
           <Input
             value={startup_script}
             disabled
+            sx={{ width: 230 }}
             endAdornment={
               <>
                 <Button
@@ -304,13 +312,24 @@ const SettingVerge = ({ onError }: Props) => {
         </IconButton>
       </SettingItem>
 
+      <SettingItem label={t("Open Dev Tools")}>
+        <IconButton
+          color="inherit"
+          size="small"
+          sx={{ my: "2px" }}
+          onClick={openDevTools}
+        >
+          <ArrowForward />
+        </IconButton>
+      </SettingItem>
+
       <SettingItem label={t("Exit")}>
         <IconButton
           color="inherit"
           size="small"
           sx={{ my: "2px" }}
           onClick={() => {
-            exit(0);
+            exitApp();
           }}
         >
           <ArrowForward />

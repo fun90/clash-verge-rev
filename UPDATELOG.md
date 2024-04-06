@@ -1,3 +1,185 @@
+## v1.5.11
+
+### Features
+
+- Meta(mihomo)内核更新 1.18.2
+
+### Bugs Fixes
+
+- 升级图标无法点击的问题
+- 卸载时检查安装目录是否为空
+- 代理界面图标重合的问题
+
+---
+
+## v1.5.10
+
+### Features
+
+- 优化 Linux 托盘菜单显示
+- 添加透明代理端口设置
+- 删除订阅前确认
+
+### Bugs Fixes
+
+- 删除 MacOS 程序坞图标
+- Windows 下 service 日志没有清理
+- MacOS 无法开启系统代理
+
+---
+
+## v1.5.9
+
+### Features
+
+- 缓存代理组图标
+- 使用`boa_engine` 代替 `rquickjs`
+- 支持 Linux armv7
+
+### Bugs Fixes
+
+- Windows 首次安装无法点击
+- Windows 触摸屏无法拖动
+- 规则列表 `REJECT-DROP` 颜色
+- MacOS Dock 栏不显示图标
+- MacOS 自定义字体无效
+- 避免使用空 UA 拉取订阅
+
+---
+
+## v1.5.8
+
+### Features
+
+- 优化 UI 细节
+- Linux 绘制窗口圆角
+- 开放 DevTools
+
+### Bugs Fixes
+
+- 修复 MacOS 下开启 Tun 内核崩溃的问题
+
+---
+
+## v1.5.7
+
+### Features
+
+- 优化 UI 各种细节
+- 提供菜单栏图标样式切换选项(单色/彩色/禁用)
+- 添加自动检查更新开关
+- MacOS 开启 Tun 模式自动修改 DNS
+- 调整可拖动区域(尝试修复触摸屏无法拖动的问题)
+
+---
+
+## v1.5.6
+
+### Features
+
+- 全新专属 Verge rev UI 界面 (by @Amnesiash) 及细节调整
+- 提供允许无效证书的开关
+- 删除不必要的快捷键
+- Provider 更新添加动画
+- Merge 支持 Provider
+- 更换订阅框的粘贴按钮，删除默认的"Remote File" Profile 名称
+- 链接菜单添加节点显示
+
+### Bugs Fixes
+
+- Linux 下图片显示错误
+
+---
+
+## v1.5.4
+
+### Features
+
+- 支持自定义托盘图标
+- 支持禁用代理组图标
+- 代理组显示当前代理
+- 修改 `打开面板` 快捷键为`打开/关闭面板`
+
+---
+
+## v1.5.3
+
+### Features
+
+- Tun 设置添加重置按钮
+
+### Bugs Fixes
+
+- Tun 设置项显示错误的问题
+- 修改一些默认值
+- 启动时不更改启动项设置
+
+---
+
+## v1.5.2
+
+### Features
+
+- 支持自定义延迟测试超时时间
+- 优化 Tun 相关设置
+
+### Bugs Fixes
+
+- Merge 操作出错
+- 安装后重启服务
+- 修复管理员权限启动时开机启动失效的问题
+
+---
+
+## v1.5.1
+
+### Features
+
+- 保存窗口最大化状态
+- Proxy Provider 显示数量
+- 不再提供 32 位安装包（因为 32 位经常出现各种奇怪问题，比如 tun 模式无法开启；现在系统也几乎没有 32 位了）
+
+### Bugs Fixes
+
+- 优化设置项名称
+- 自定义 GLOBAL 代理组时代理组显示错误的问题
+
+---
+
+## v1.5.0
+
+### Features
+
+- 删除 Clash 字段过滤功能
+- 添加 socks 端口和 http 端口设置
+- 升级内核到 1.18.1
+
+### Bugs Fixes
+
+- 修复 32 位版本无法显示流量信息的问题
+
+---
+
+## v1.4.11
+
+### Break Changes
+
+- 此版本更改了 Windows 安装包安装模式，需要卸载后手动安装，否则无法安装到正确位置
+
+### Features
+
+- 优化了系统代理开启的代码，解决了稀有场景下代理开启卡顿的问题
+- 添加 MacOS 下的 debug 日志，以便日后调试稀有场景下 MacOS 下无法开启系统代理的问题
+- MacOS 关闭 GUI 时同步杀除后台 GUI [#306](https://github.com/clash-verge-rev/clash-verge-rev/issues/306)
+
+### Bugs Fixes
+
+- 解决自动更新时文件占用问题
+- 解决稀有场景下系统代理开启失败的问题
+- 删除冗余内核代码
+
+---
+
 ## v1.4.10
 
 ### Features
@@ -7,7 +189,7 @@
 - 在 Proxy Provider 页面展示订阅信息
 - 优化 Provider 支持
 
-### Bugs fixed:
+### Bugs Fixes
 
 - 更改端口时立即重设系统代理
 - 网站测试超时错误

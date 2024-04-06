@@ -1,4 +1,4 @@
-import { Grid, IconButton, Paper } from "@mui/material";
+import { Box, Grid, IconButton, Paper } from "@mui/material";
 import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
 import { BasePage, Notice } from "@/components/base";
@@ -7,8 +7,9 @@ import { openWebUrl } from "@/services/cmds";
 import SettingVerge from "@/components/setting/setting-verge";
 import SettingClash from "@/components/setting/setting-clash";
 import SettingSystem from "@/components/setting/setting-system";
-import { useRecoilState } from "recoil";
 import { atomThemeMode } from "@/services/states";
+import { useRecoilState } from "recoil";
+import { useCustomTheme } from "@/components/layout/use-custom-theme";
 
 const SettingPage = () => {
   const { t } = useTranslation();
@@ -18,46 +19,56 @@ const SettingPage = () => {
   };
 
   const toGithubRepo = useLockFn(() => {
-    return openWebUrl("https://github.com/fun90/clash-verge-rev");
+    return openWebUrl("https://github.com/clash-verge-rev/clash-verge-rev");
   });
 
-  const [mode, setMode] = useRecoilState(atomThemeMode);
-  const backgroundColor = mode === "light" ? "#ffffff" : "#191629";
+  const [mode] = useRecoilState(atomThemeMode);
+  const isDark = mode === "light" ? false : true;
+  const { theme } = useCustomTheme();
 
   return (
-    <BasePage title={t("Settings")}>
-      <Grid container spacing={{ xs: 2, lg: 3 }}>
+    <BasePage
+      title={t("Settings")}
+      header={
+        <IconButton
+          size="medium"
+          color="inherit"
+          title="@clash-verge-rev/clash-verge-rev"
+          onClick={toGithubRepo}
+        >
+          <GitHub fontSize="inherit" />
+        </IconButton>
+      }
+    >
+      <Grid container spacing={{ xs: 1.5, lg: 1.5 }}>
         <Grid item xs={12} md={6}>
-          <Paper
+          <Box
             sx={{
-              borderRadius: 1,
-              boxShadow: 2,
-              marginBottom: 2,
-              backgroundColor: { backgroundColor },
+              borderRadius: 2,
+              marginBottom: 1.5,
+              backgroundColor: isDark ? "#282a36" : "#ffffff",
             }}
           >
             <SettingSystem onError={onError} />
-          </Paper>
-          <Paper
+          </Box>
+          <Box
             sx={{
-              borderRadius: 1,
-              boxShadow: 2,
-              backgroundColor: { backgroundColor },
+              borderRadius: 2,
+              backgroundColor: isDark ? "#282a36" : "#ffffff",
             }}
           >
             <SettingClash onError={onError} />
-          </Paper>
+          </Box>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Paper
+          <Box
             sx={{
-              borderRadius: 1,
-              boxShadow: 2,
-              backgroundColor: { backgroundColor },
+              borderRadius: 2,
+              backgroundColor: isDark ? "#282a36" : "#ffffff",
             }}
           >
             <SettingVerge onError={onError} />
-          </Paper>
+          </Box>
         </Grid>
       </Grid>
     </BasePage>

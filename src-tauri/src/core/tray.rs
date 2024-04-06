@@ -1,4 +1,9 @@
-use crate::{cmds, config::Config, feat, utils::resolve};
+use crate::{
+    cmds,
+    config::Config,
+    feat,
+    utils::{dirs, resolve},
+};
 use anyhow::Result;
 use tauri::{
     api, AppHandle, CustomMenuItem, Manager, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem,
@@ -125,30 +130,89 @@ impl Tray {
         let _ = tray.get_item("global_mode").set_selected(mode == "global");
         let _ = tray.get_item("direct_mode").set_selected(mode == "direct");
 
+        #[cfg(target_os = "linux")]
+        match mode.as_str() {
+            "rule" => {
+                let _ = tray
+                    .get_item("rule_mode")
+                    .set_title(t!("Rule Mode  ✔", "规则模式  ✔"));
+                let _ = tray
+                    .get_item("global_mode")
+                    .set_title(t!("Global Mode", "全局模式"));
+                let _ = tray
+                    .get_item("direct_mode")
+                    .set_title(t!("Direct Mode", "直连模式"));
+            }
+            "global" => {
+                let _ = tray
+                    .get_item("rule_mode")
+                    .set_title(t!("Rule Mode", "规则模式"));
+                let _ = tray
+                    .get_item("global_mode")
+                    .set_title(t!("Global Mode  ✔", "全局模式  ✔"));
+                let _ = tray
+                    .get_item("direct_mode")
+                    .set_title(t!("Direct Mode", "直连模式"));
+            }
+            "direct" => {
+                let _ = tray
+                    .get_item("rule_mode")
+                    .set_title(t!("Rule Mode", "规则模式"));
+                let _ = tray
+                    .get_item("global_mode")
+                    .set_title(t!("Global Mode", "全局模式"));
+                let _ = tray
+                    .get_item("direct_mode")
+                    .set_title(t!("Direct Mode  ✔", "直连模式  ✔"));
+            }
+            _ => {}
+        }
+
         let verge = Config::verge();
         let verge = verge.latest();
         let system_proxy = verge.enable_system_proxy.as_ref().unwrap_or(&false);
         let tun_mode = verge.enable_tun_mode.as_ref().unwrap_or(&false);
+        let common_tray_icon = verge.common_tray_icon.as_ref().unwrap_or(&false);
+        let sysproxy_tray_icon = verge.sysproxy_tray_icon.as_ref().unwrap_or(&false);
+        let tun_tray_icon = verge.tun_tray_icon.as_ref().unwrap_or(&false);
 
         let mut indication_icon = if *system_proxy {
             #[cfg(not(target_os = "macos"))]
-            let icon = include_bytes!("../../icons/tray-icon-sys.png").to_vec();
+            let mut icon = include_bytes!("../../icons/tray-icon-sys.png").to_vec();
             #[cfg(target_os = "macos")]
-            let icon = include_bytes!("../../icons/mac-tray-icon-sys.png").to_vec();
+            let mut icon = include_bytes!("../../icons/mac-tray-icon-sys.png").to_vec();
+            if *sysproxy_tray_icon {
+                let path = dirs::app_home_dir()?.join("icons").join("sysproxy.png");
+                if path.exists() {
+                    icon = std::fs::read(path).unwrap();
+                }
+            }
             icon
         } else {
             #[cfg(not(target_os = "macos"))]
-            let icon = include_bytes!("../../icons/tray-icon.png").to_vec();
+            let mut icon = include_bytes!("../../icons/tray-icon.png").to_vec();
             #[cfg(target_os = "macos")]
-            let icon = include_bytes!("../../icons/mac-tray-icon.png").to_vec();
+            let mut icon = include_bytes!("../../icons/mac-tray-icon.png").to_vec();
+            if *common_tray_icon {
+                let path = dirs::app_home_dir()?.join("icons").join("common.png");
+                if path.exists() {
+                    icon = std::fs::read(path).unwrap();
+                }
+            }
             icon
         };
 
         if *tun_mode {
             #[cfg(not(target_os = "macos"))]
-            let icon = include_bytes!("../../icons/tray-icon-tun.png").to_vec();
+            let mut icon = include_bytes!("../../icons/tray-icon-tun.png").to_vec();
             #[cfg(target_os = "macos")]
-            let icon = include_bytes!("../../icons/mac-tray-icon-tun.png").to_vec();
+            let mut icon = include_bytes!("../../icons/mac-tray-icon-tun.png").to_vec();
+            if *tun_tray_icon {
+                let path = dirs::app_home_dir()?.join("icons").join("tun.png");
+                if path.exists() {
+                    icon = std::fs::read(path).unwrap();
+                }
+            }
             indication_icon = icon
         }
 
@@ -156,6 +220,27 @@ impl Tray {
 
         let _ = tray.get_item("system_proxy").set_selected(*system_proxy);
         let _ = tray.get_item("tun_mode").set_selected(*tun_mode);
+        #[cfg(target_os = "linux")]
+        {
+            if *system_proxy {
+                let _ = tray
+                    .get_item("system_proxy")
+                    .set_title(t!("System Proxy  ✔", "系统代理  ✔"));
+            } else {
+                let _ = tray
+                    .get_item("system_proxy")
+                    .set_title(t!("System Proxy", "系统代理"));
+            }
+            if *tun_mode {
+                let _ = tray
+                    .get_item("tun_mode")
+                    .set_title(t!("TUN Mode  ✔", "Tun 模式  ✔"));
+            } else {
+                let _ = tray
+                    .get_item("tun_mode")
+                    .set_title(t!("TUN Mode", "Tun 模式"));
+            }
+        }
 
         let switch_map = {
             let mut map = std::collections::HashMap::new();
@@ -203,14 +288,8 @@ impl Tray {
                 "open_logs_dir" => crate::log_err!(cmds::open_logs_dir()),
                 "restart_clash" => feat::restart_clash_core(),
                 "restart_app" => api::process::restart(&app_handle.env()),
-                "quit" => {
-                    let _ = resolve::save_window_size_position(app_handle, true);
+                "quit" => cmds::exit_app(app_handle.clone()),
 
-                    resolve::resolve_reset();
-                    api::process::kill_children();
-                    app_handle.exit(0);
-                    std::process::exit(0);
-                }
                 _ => {}
             },
             _ => {}
