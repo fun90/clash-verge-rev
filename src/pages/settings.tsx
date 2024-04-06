@@ -27,19 +27,7 @@ const SettingPage = () => {
   const { theme } = useCustomTheme();
 
   return (
-    <BasePage
-      title={t("Settings")}
-      header={
-        <IconButton
-          size="medium"
-          color="inherit"
-          title="@clash-verge-rev/clash-verge-rev"
-          onClick={toGithubRepo}
-        >
-          <GitHub fontSize="inherit" />
-        </IconButton>
-      }
-    >
+    <BasePage title={t("Settings")}>
       <Grid container spacing={{ xs: 1.5, lg: 1.5 }}>
         <Grid item xs={12} md={6}>
           <Box
