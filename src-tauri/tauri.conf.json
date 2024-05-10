@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/schema.json",
   "package": {
     "productName": "Clash Verge",
-    "version": "1.6.0"
+    "version": "1.6.2"
   },
   "build": {
     "distDir": "../dist",
@@ -69,7 +69,8 @@
       },
       "fs": {
         "exists": true,
-        "scope": ["$APPDATA/**", "$RESOURCE/../**"]
+        "readFile": true,
+        "scope": ["$APPDATA/**", "$RESOURCE/../**", "**"]
       }
     },
     "windows": [],

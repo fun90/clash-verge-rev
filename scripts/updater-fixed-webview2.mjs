@@ -3,8 +3,8 @@ import { getOctokit, context } from "@actions/github";
 import { resolveUpdateLog } from "./updatelog.mjs";
 
 const UPDATE_TAG_NAME = "updater";
-const UPDATE_JSON_FILE = "update.json";
-const UPDATE_JSON_PROXY = "update-proxy.json";
+const UPDATE_JSON_FILE = "update-fixed-webview2.json";
+const UPDATE_JSON_PROXY = "update-fixed-webview2-proxy.json";
 
 /// generate update.json
 /// upload to update tag's release asset
@@ -38,16 +38,6 @@ async function resolveUpdater() {
     notes: await resolveUpdateLog(tag.name), // use updatelog.md
     pub_date: new Date().toISOString(),
     platforms: {
-      win64: { signature: "", url: "" }, // compatible with older formats
-      linux: { signature: "", url: "" }, // compatible with older formats
-      darwin: { signature: "", url: "" }, // compatible with older formats
-      "darwin-aarch64": { signature: "", url: "" },
-      "darwin-intel": { signature: "", url: "" },
-      "darwin-x86_64": { signature: "", url: "" },
-      "linux-x86_64": { signature: "", url: "" },
-      "linux-x86": { signature: "", url: "" },
-      "linux-aarch64": { signature: "", url: "" },
-      "linux-armv7": { signature: "", url: "" },
       "windows-x86_64": { signature: "", url: "" },
       "windows-aarch64": { signature: "", url: "" },
       "windows-x86": { signature: "", url: "" },
@@ -58,79 +48,33 @@ async function resolveUpdater() {
     const { name, browser_download_url } = asset;
 
     // win64 url
-    if (name.endsWith("x64-setup.nsis.zip")) {
-      updateData.platforms.win64.url = browser_download_url;
+    if (name.endsWith("x64_fixed_webview2-setup.nsis.zip")) {
       updateData.platforms["windows-x86_64"].url = browser_download_url;
     }
     // win64 signature
-    if (name.endsWith("x64-setup.nsis.zip.sig")) {
+    if (name.endsWith("x64_fixed_webview2-setup.nsis.zip.sig")) {
       const sig = await getSignature(browser_download_url);
-      updateData.platforms.win64.signature = sig;
       updateData.platforms["windows-x86_64"].signature = sig;
     }
 
     // win32 url
-    if (name.endsWith("x64-setup.nsis.zip")) {
+    if (name.endsWith("x86_fixed_webview2-setup.nsis.zip")) {
       updateData.platforms["windows-x86"].url = browser_download_url;
     }
     // win32 signature
-    if (name.endsWith("x64-setup.nsis.zip.sig")) {
+    if (name.endsWith("x86_fixed_webview2-setup.nsis.zip.sig")) {
       const sig = await getSignature(browser_download_url);
       updateData.platforms["windows-x86"].signature = sig;
     }
 
     // win arm url
-    if (name.endsWith("arm64-setup.nsis.zip")) {
+    if (name.endsWith("arm64_fixed_webview2-setup.nsis.zip")) {
       updateData.platforms["windows-aarch64"].url = browser_download_url;
     }
     // win arm signature
-    if (name.endsWith("arm64-setup.nsis.zip.sig")) {
+    if (name.endsWith("arm64_fixed_webview2-setup.nsis.zip.sig")) {
       const sig = await getSignature(browser_download_url);
       updateData.platforms["windows-aarch64"].signature = sig;
-    }
-
-    // darwin url (intel)
-    if (name.endsWith(".app.tar.gz") && !name.includes("aarch")) {
-      updateData.platforms.darwin.url = browser_download_url;
-      updateData.platforms["darwin-intel"].url = browser_download_url;
-      updateData.platforms["darwin-x86_64"].url = browser_download_url;
-    }
-    // darwin signature (intel)
-    if (name.endsWith(".app.tar.gz.sig") && !name.includes("aarch")) {
-      const sig = await getSignature(browser_download_url);
-      updateData.platforms.darwin.signature = sig;
-      updateData.platforms["darwin-intel"].signature = sig;
-      updateData.platforms["darwin-x86_64"].signature = sig;
-    }
-
-    // darwin url (aarch)
-    if (name.endsWith("aarch64.app.tar.gz")) {
-      updateData.platforms["darwin-aarch64"].url = browser_download_url;
-    }
-    // darwin signature (aarch)
-    if (name.endsWith("aarch64.app.tar.gz.sig")) {
-      const sig = await getSignature(browser_download_url);
-      updateData.platforms["darwin-aarch64"].signature = sig;
-    }
-
-    // linux x64 url
-    if (name.endsWith("amd64.AppImage.tar.gz")) {
-      updateData.platforms.linux.url = browser_download_url;
-      updateData.platforms["linux-x86_64"].url = browser_download_url;
-      updateData.platforms["linux-x86"].url = browser_download_url;
-      // 暂时使用x64版本的url和sig，使得可以检查更新，但aarch64版本还不支持构建appimage
-      updateData.platforms["linux-aarch64"].url = browser_download_url;
-      updateData.platforms["linux-armv7"].url = browser_download_url;
-    }
-    // linux x64 signature
-    if (name.endsWith("amd64.AppImage.tar.gz.sig")) {
-      const sig = await getSignature(browser_download_url);
-      updateData.platforms.linux.signature = sig;
-      updateData.platforms["linux-x86_64"].signature = sig;
-      updateData.platforms["linux-x86"].url = browser_download_url;
-      // 暂时使用x64版本的url和sig，使得可以检查更新，但aarch64版本还不支持构建appimage
-      updateData.platforms["linux-aarch64"].signature = sig;
-      updateData.platforms["linux-armv7"].signature = sig;
     }
   });
 

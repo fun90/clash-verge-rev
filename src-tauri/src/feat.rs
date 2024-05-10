@@ -183,7 +183,12 @@ pub async fn patch_verge(patch: IVerge) -> Result<()> {
     let common_tray_icon = patch.common_tray_icon;
     let sysproxy_tray_icon = patch.sysproxy_tray_icon;
     let tun_tray_icon = patch.tun_tray_icon;
-
+    #[cfg(not(target_os = "windows"))]
+    let redir_enabled = patch.verge_redir_enabled;
+    #[cfg(target_os = "linux")]
+    let tproxy_enabled = patch.verge_tproxy_enabled;
+    let socks_enabled = patch.verge_socks_enabled;
+    let http_enabled = patch.verge_http_enabled;
     match {
         let service_mode = patch.enable_service_mode;
 
@@ -195,7 +200,20 @@ pub async fn patch_verge(patch: IVerge) -> Result<()> {
         } else if tun_mode.is_some() {
             update_core_config().await?;
         }
-
+        #[cfg(not(target_os = "windows"))]
+        if redir_enabled.is_some() {
+            Config::generate()?;
+            CoreManager::global().run_core().await?;
+        }
+        #[cfg(target_os = "linux")]
+        if tproxy_enabled.is_some() {
+            Config::generate()?;
+            CoreManager::global().run_core().await?;
+        }
+        if socks_enabled.is_some() || http_enabled.is_some() {
+            Config::generate()?;
+            CoreManager::global().run_core().await?;
+        }
         if auto_launch.is_some() {
             sysopt::Sysopt::global().update_launch()?;
         }
@@ -299,7 +317,7 @@ pub fn copy_clash_env(app_handle: &AppHandle) {
 
     let sh =
         format!("export https_proxy={http_proxy} http_proxy={http_proxy} all_proxy={socks5_proxy}");
-    let cmd: String = format!("set http_proxy={http_proxy} \n set https_proxy={http_proxy}");
+    let cmd: String = format!("set http_proxy={http_proxy}\r\nset https_proxy={http_proxy}");
     let ps: String = format!("$env:HTTP_PROXY=\"{http_proxy}\"; $env:HTTPS_PROXY=\"{http_proxy}\"");
 
     let mut cliboard = app_handle.clipboard_manager();
