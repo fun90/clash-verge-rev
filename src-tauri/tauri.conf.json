@@ -23,7 +23,7 @@
       ],
       "resources": ["resources"],
       "publisher": "Clash Verge Rev",
-      "externalBin": ["sidecar/verge-mihomo", "sidecar/verge-mihomo-alpha"],
+      "externalBin": ["sidecar/verge-mihomo"],
       "copyright": "GNU General Public License v3.0",
       "category": "DeveloperTool",
       "shortDescription": "A Clash Meta GUI based on tauri.",
@@ -32,11 +32,11 @@
     "updater": {
       "active": true,
       "endpoints": [
-        "https://mirror.ghproxy.com/https://github.com/clash-verge-rev/clash-verge-rev/releases/download/updater/update-proxy.json",
-        "https://github.com/clash-verge-rev/clash-verge-rev/releases/download/updater/update.json"
+        "https://mirror.ghproxy.com/https://github.com/fun90/clash-verge-rev/releases/download/updater/update-proxy.json",
+        "https://github.com/fun90/clash-verge-rev/releases/download/updater/update.json"
       ],
       "dialog": false,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQyOEMyRjBCQkVGOUJEREYKUldUZnZmbStDeStNMHU5Mmo1N24xQXZwSVRYbXA2NUpzZE5oVzlqeS9Bc0t6RVV4MmtwVjBZaHgK"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc4RTUyODQwRjg1NkE0NjgKUldSb3BGYjRRQ2psZU81b0JXQ3dwZVUyMytxWTU3a2lHdlpnR25oQjlJd3pNZ01wV2kxQ0p0dk8K"
     },
     "allowlist": {
       "shell": {
