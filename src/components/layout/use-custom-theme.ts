@@ -1,9 +1,11 @@
 import { useEffect, useMemo } from "react";
 import { alpha, createTheme, Shadows, Theme } from "@mui/material";
-import { appWindow } from "@tauri-apps/api/window";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { useSetThemeMode, useThemeMode } from "@/services/states";
 import { defaultTheme, defaultDarkTheme } from "@/pages/_theme";
 import { useVerge } from "@/hooks/use-verge";
+import { useTheme } from "@mui/material/styles";
+const appWindow = getCurrentWebviewWindow();
 
 /**
  * custom theme
@@ -88,7 +90,7 @@ export const useCustomTheme = () => {
     }
 
     // css
-    const backgroundColor = mode === "light" ? "#f0f0f0" : "#2e303d";
+    const backgroundColor = mode === "light" ? "#ECECEC" : "#2e303d";
     const selectColor = mode === "light" ? "#f5f5f5" : "#d5d5d5";
     const scrollColor = mode === "light" ? "#90939980" : "#54545480";
     const dividerColor =

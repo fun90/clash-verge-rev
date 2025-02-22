@@ -32,6 +32,7 @@ interface IConfigData {
   "tproxy-port": number;
   "external-controller": string;
   secret: string;
+  "unified-delay": boolean;
   tun: {
     stack: string;
     device: string;
@@ -55,6 +56,8 @@ interface IProxyItem {
   udp: boolean;
   xudp: boolean;
   tfo: boolean;
+  mptcp: boolean;
+  smux: boolean;
   history: {
     time: string;
     delay: number;
@@ -467,6 +470,7 @@ interface IProxyVlessConfig extends IProxyBaseConfig {
   fingerprint?: string;
   servername?: string;
   "client-fingerprint"?: ClientFingerprint;
+  smux?: boolean;
 }
 // vmess
 interface IProxyVmessConfig extends IProxyBaseConfig {
@@ -495,6 +499,7 @@ interface IProxyVmessConfig extends IProxyBaseConfig {
   "global-padding"?: boolean;
   "authenticated-length"?: boolean;
   "client-fingerprint"?: ClientFingerprint;
+  smux?: boolean;
 }
 interface WireGuardPeerOptions {
   server?: string;
@@ -603,6 +608,7 @@ interface IProxyShadowsocksConfig extends IProxyBaseConfig {
   "udp-over-tcp"?: boolean;
   "udp-over-tcp-version"?: number;
   "client-fingerprint"?: ClientFingerprint;
+  smux?: boolean;
 }
 // shadowsocksR
 interface IProxyshadowsocksRConfig extends IProxyBaseConfig {
@@ -700,9 +706,9 @@ interface IVergeConfig {
   common_tray_icon?: boolean;
   sysproxy_tray_icon?: boolean;
   tun_tray_icon?: boolean;
+  enable_tray_speed?: boolean;
   enable_tun_mode?: boolean;
   enable_auto_launch?: boolean;
-  enable_service_mode?: boolean;
   enable_silent_start?: boolean;
   enable_system_proxy?: boolean;
   proxy_auto_config?: boolean;
@@ -718,6 +724,7 @@ interface IVergeConfig {
   verge_socks_enabled?: boolean;
   verge_http_enabled?: boolean;
   enable_proxy_guard?: boolean;
+  enable_bypass_check?: boolean;
   use_default_bypass?: boolean;
   proxy_guard_duration?: number;
   system_proxy_bypass?: string;
@@ -743,4 +750,22 @@ interface IVergeConfig {
   auto_log_clean?: 0 | 1 | 2 | 3;
   proxy_layout_column?: number;
   test_list?: IVergeTestItem[];
+  webdav_url?: string;
+  webdav_username?: string;
+  webdav_password?: string;
+}
+
+interface IWebDavFile {
+  filename: string;
+  href: string;
+  last_modified: string;
+  content_length: number;
+  content_type: string;
+  tag: string;
+}
+
+interface IWebDavConfig {
+  url: string;
+  username: string;
+  password: string;
 }

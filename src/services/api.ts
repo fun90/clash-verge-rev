@@ -49,12 +49,6 @@ export const getClashConfig = async () => {
   return instance.get("/configs") as Promise<IConfigData>;
 };
 
-/// Update current configs
-export const updateConfigs = async (config: Partial<IConfigData>) => {
-  const instance = await getAxios();
-  return instance.patch("/configs", config);
-};
-
 /// Update geo data
 export const updateGeoData = async () => {
   const instance = await getAxios();
@@ -82,7 +76,7 @@ export const getProxyDelay = async (
 ) => {
   const params = {
     timeout: timeout || 10000,
-    url: url || "http://1.1.1.1",
+    url: url || "http://cp.cloudflare.com/generate_204",
   };
   const instance = await getAxios();
   const result = await instance.get(
@@ -128,6 +122,8 @@ export const getProxies = async () => {
       udp: false,
       xudp: false,
       tfo: false,
+      mptcp: false,
+      smux: false,
       history: [],
     };
   };
@@ -262,7 +258,7 @@ export const getGroupProxyDelays = async (
 ) => {
   const params = {
     timeout: timeout || 10000,
-    url: url || "http://1.1.1.1",
+    url: url || "http://cp.cloudflare.com/generate_204",
   };
   const instance = await getAxios();
   const result = await instance.get(

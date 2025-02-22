@@ -492,6 +492,9 @@ function URI_VMESS(line: string): IProxyVmessConfig {
   }
 }
 
+/**
+ * VLess URL Decode.
+ */
 function URI_VLESS(line: string): IProxyVlessConfig {
   line = line.split("vless://")[1];
   let isShadowrocket;
@@ -571,9 +574,11 @@ function URI_VLESS(line: string): IProxyVlessConfig {
 
   if (params.headerType === "http") {
     proxy.network = "http";
-  } else {
+  } else if (params.type === "ws") {
     proxy.network = "ws";
     httpupgrade = true;
+  } else {
+    proxy.network = "tcp";
   }
   if (!proxy.network && isShadowrocket && params.obfs) {
     switch (params.type) {
@@ -619,7 +624,7 @@ function URI_VLESS(line: string): IProxyVlessConfig {
       opts["v2ray-http-upgrade-fast-open"] = true;
     }
     if (Object.keys(opts).length > 0) {
-      proxy[`${proxy.network}-opts`] = opts;
+      proxy[`ws-opts`] = opts;
     }
   }
 
@@ -631,7 +636,6 @@ function URI_VLESS(line: string): IProxyVlessConfig {
       proxy.servername = Array.isArray(httpHost) ? httpHost[0] : httpHost;
     }
   }
-
   return proxy;
 }
 

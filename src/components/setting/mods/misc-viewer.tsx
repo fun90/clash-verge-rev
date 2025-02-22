@@ -103,7 +103,10 @@ export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
             primary={t("Auto Close Connections")}
             sx={{ maxWidth: "fit-content" }}
           />
-          <TooltipIcon title={t("Auto Close Connections Info")} />
+          <TooltipIcon
+            title={t("Auto Close Connections Info")}
+            sx={{ opacity: "0.7" }}
+          />
           <Switch
             edge="end"
             checked={values.autoCloseConnection}
@@ -130,7 +133,10 @@ export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
             primary={t("Enable Builtin Enhanced")}
             sx={{ maxWidth: "fit-content" }}
           />
-          <TooltipIcon title={t("Enable Builtin Enhanced Info")} />
+          <TooltipIcon
+            title={t("Enable Builtin Enhanced Info")}
+            sx={{ opacity: "0.7" }}
+          />
           <Switch
             edge="end"
             checked={values.enableBuiltinEnhanced}
@@ -196,7 +202,10 @@ export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
             primary={t("Default Latency Test")}
             sx={{ maxWidth: "fit-content" }}
           />
-          <TooltipIcon title={t("Default Latency Test Info")} />
+          <TooltipIcon
+            title={t("Default Latency Test Info")}
+            sx={{ opacity: "0.7" }}
+          />
           <TextField
             autoComplete="new-password"
             size="small"
@@ -205,7 +214,7 @@ export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
             spellCheck="false"
             sx={{ width: 250, marginLeft: "auto" }}
             value={values.defaultLatencyTest}
-            placeholder="http://1.1.1.1"
+            placeholder="http://cp.cloudflare.com/generate_204"
             onChange={(e) =>
               setValues((v) => ({ ...v, defaultLatencyTest: e.target.value }))
             }

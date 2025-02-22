@@ -1,32 +1,9 @@
 import dayjs from "dayjs";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import { Notice } from "@/components/base";
 
 export async function copyClashEnv() {
   return invoke<void>("copy_clash_env");
-}
-
-export async function getClashLogs() {
-  const regex = /time="(.+?)"\s+level=(.+?)\s+msg="(.+?)"/;
-  const newRegex = /(.+?)\s+(.+?)\s+(.+)/;
-  const logs = await invoke<string[]>("get_clash_logs");
-
-  return logs.reduce<ILogItem[]>((acc, log) => {
-    const result = log.match(regex);
-    if (result) {
-      const [_, _time, type, payload] = result;
-      const time = dayjs(_time).format("MM-DD HH:mm:ss");
-      acc.push({ time, type, payload });
-      return acc;
-    }
-
-    const result2 = log.match(newRegex);
-    if (result2) {
-      const [_, time, type, payload] = result2;
-      acc.push({ time, type, payload });
-    }
-    return acc;
-  }, []);
 }
 
 export async function getProfiles() {
@@ -141,8 +118,12 @@ export async function changeClashCore(clashCore: string) {
   return invoke<any>("change_clash_core", { clashCore });
 }
 
-export async function restartSidecar() {
-  return invoke<void>("restart_sidecar");
+export async function restartCore() {
+  return invoke<void>("restart_core");
+}
+
+export async function restartApp() {
+  return invoke<void>("restart_app");
 }
 
 export async function getAppDir() {
@@ -188,27 +169,6 @@ export async function cmdTestDelay(url: string) {
   return invoke<number>("test_delay", { url });
 }
 
-/// service mode
-
-export async function checkService() {
-  try {
-    const result = await invoke<any>("check_service");
-    if (result?.code === 0) return "active";
-    if (result?.code === 400) return "installed";
-    return "unknown";
-  } catch (err: any) {
-    return "uninstall";
-  }
-}
-
-export async function installService(passwd: string) {
-  return invoke<void>("install_service", { passwd });
-}
-
-export async function uninstallService(passwd: string) {
-  return invoke<void>("uninstall_service", { passwd });
-}
-
 export async function invoke_uwp_tool() {
   return invoke<void>("invoke_uwp_tool").catch((err) =>
     Notice.error(err?.message || err.toString(), 1500)
@@ -244,4 +204,36 @@ export async function getNetworkInterfaces() {
 
 export async function getNetworkInterfacesInfo() {
   return invoke<INetworkInterface[]>("get_network_interfaces_info");
+}
+
+export async function createWebdavBackup() {
+  return invoke<void>("create_webdav_backup");
+}
+
+export async function deleteWebdavBackup(filename: string) {
+  return invoke<void>("delete_webdav_backup", { filename });
+}
+
+export async function restoreWebDavBackup(filename: string) {
+  return invoke<void>("restore_webdav_backup", { filename });
+}
+
+export async function saveWebdavConfig(
+  url: string,
+  username: string,
+  password: String
+) {
+  return invoke<void>("save_webdav_config", {
+    url,
+    username,
+    password,
+  });
+}
+
+export async function listWebDavBackup() {
+  let list: IWebDavFile[] = await invoke<IWebDavFile[]>("list_webdav_backup");
+  list.map((item) => {
+    item.filename = item.href.split("/").pop() as string;
+  });
+  return list;
 }

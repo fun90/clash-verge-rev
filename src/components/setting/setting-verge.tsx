@@ -1,14 +1,7 @@
 import { useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { open } from "@tauri-apps/api/dialog";
-import {
-  Button,
-  MenuItem,
-  Select,
-  Input,
-  Typography,
-  Box,
-} from "@mui/material";
+import { open } from "@tauri-apps/plugin-dialog";
+import { Button, MenuItem, Select, Input, Typography } from "@mui/material";
 import {
   exitApp,
   openAppDir,
@@ -17,7 +10,7 @@ import {
   openDevTools,
   copyClashEnv,
 } from "@/services/cmds";
-import { checkUpdate } from "@tauri-apps/api/updater";
+import { check as checkUpdate } from "@tauri-apps/plugin-updater";
 import { useVerge } from "@/hooks/use-verge";
 import { version } from "@root/package.json";
 import { DialogRef, Notice } from "@/components/base";
@@ -30,16 +23,31 @@ import { ThemeViewer } from "./mods/theme-viewer";
 import { GuardState } from "./mods/guard-state";
 import { LayoutViewer } from "./mods/layout-viewer";
 import { UpdateViewer } from "./mods/update-viewer";
+import { BackupViewer } from "./mods/backup-viewer";
 import getSystem from "@/utils/get-system";
 import { routers } from "@/pages/_routers";
 import { TooltipIcon } from "@/components/base/base-tooltip-icon";
 import { ContentCopyRounded } from "@mui/icons-material";
+import { languages } from "@/services/i18n";
 
 interface Props {
   onError?: (err: Error) => void;
 }
 
 const OS = getSystem();
+
+const languageOptions = Object.entries(languages).map(([code, _]) => {
+  const labels: { [key: string]: string } = {
+    en: "English",
+    ru: "Русский",
+    zh: "中文",
+    fa: "فارسی",
+    tt: "Татар",
+    id: "Bahasa Indonesia",
+    ar: "العربية",
+  };
+  return { code, label: labels[code] };
+});
 
 const SettingVerge = ({ onError }: Props) => {
   const { t } = useTranslation();
@@ -59,6 +67,7 @@ const SettingVerge = ({ onError }: Props) => {
   const themeRef = useRef<DialogRef>(null);
   const layoutRef = useRef<DialogRef>(null);
   const updateRef = useRef<DialogRef>(null);
+  const backupRef = useRef<DialogRef>(null);
 
   const onChangeData = (patch: Partial<IVergeConfig>) => {
     mutateVerge({ ...verge, ...patch }, false);
@@ -67,7 +76,7 @@ const SettingVerge = ({ onError }: Props) => {
   const onCheckUpdate = async () => {
     try {
       const info = await checkUpdate();
-      if (!info?.shouldUpdate) {
+      if (!info?.available) {
         Notice.success(t("Currently on the Latest Version"));
       } else {
         updateRef.current?.open();
@@ -90,6 +99,7 @@ const SettingVerge = ({ onError }: Props) => {
       <MiscViewer ref={miscRef} />
       <LayoutViewer ref={layoutRef} />
       <UpdateViewer ref={updateRef} />
+      <BackupViewer ref={backupRef} />
 
       <SettingItem label={t("Language")}>
         <GuardState
@@ -100,10 +110,11 @@ const SettingVerge = ({ onError }: Props) => {
           onGuard={(e) => patchVerge({ language: e })}
         >
           <Select size="small" sx={{ width: 110, "> div": { py: "7.5px" } }}>
-            <MenuItem value="zh">中文</MenuItem>
-            <MenuItem value="en">English</MenuItem>
-            <MenuItem value="ru">Русский</MenuItem>
-            <MenuItem value="fa">فارسی</MenuItem>
+            {languageOptions.map(({ code, label }) => (
+              <MenuItem key={code} value={code}>
+                {label}
+              </MenuItem>
+            ))}
           </Select>
         </GuardState>
       </SettingItem>
@@ -154,6 +165,7 @@ const SettingVerge = ({ onError }: Props) => {
           <Select size="small" sx={{ width: 140, "> div": { py: "7.5px" } }}>
             <MenuItem value="bash">Bash</MenuItem>
             <MenuItem value="cmd">CMD</MenuItem>
+            <MenuItem value="nushell">Nushell</MenuItem>
             <MenuItem value="powershell">PowerShell</MenuItem>
           </Select>
         </GuardState>
@@ -191,7 +203,7 @@ const SettingVerge = ({ onError }: Props) => {
               <>
                 <Button
                   onClick={async () => {
-                    const path = await open({
+                    const selected = await open({
                       directory: false,
                       multiple: false,
                       filters: [
@@ -201,9 +213,9 @@ const SettingVerge = ({ onError }: Props) => {
                         },
                       ],
                     });
-                    if (path?.length) {
-                      onChangeData({ startup_script: `${path}` });
-                      patchVerge({ startup_script: `${path}` });
+                    if (selected) {
+                      onChangeData({ startup_script: `${selected}` });
+                      patchVerge({ startup_script: `${selected}` });
                     }
                   }}
                 >
@@ -246,11 +258,31 @@ const SettingVerge = ({ onError }: Props) => {
       />
 
       <SettingItem
+        onClick={() => backupRef.current?.open()}
+        label={t("Backup Setting")}
+        extra={
+          <TooltipIcon
+            title={t("Backup Setting Info")}
+            sx={{ opacity: "0.7" }}
+          />
+        }
+      />
+
+      <SettingItem
         onClick={() => configRef.current?.open()}
         label={t("Runtime Config")}
       />
 
-      <SettingItem onClick={openAppDir} label={t("Open App Dir")} />
+      <SettingItem
+        onClick={openAppDir}
+        label={t("Open Conf Dir")}
+        extra={
+          <TooltipIcon
+            title={t("Open Conf Dir Info")}
+            sx={{ opacity: "0.7" }}
+          />
+        }
+      />
 
       <SettingItem onClick={openCoreDir} label={t("Open Core Dir")} />
 
