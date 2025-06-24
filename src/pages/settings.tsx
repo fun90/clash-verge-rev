@@ -38,31 +38,31 @@ const SettingPage = () => {
       title={t("Settings")}
       header={
         <ButtonGroup variant="contained" aria-label="Basic button group">
-          <IconButton
-            size="medium"
-            color="inherit"
-            title={t("Manual")}
-            onClick={toGithubDoc}
-          >
-            <HelpOutlineRounded fontSize="inherit" />
-          </IconButton>
-          <IconButton
-            size="medium"
-            color="inherit"
-            title={t("TG Channel")}
-            onClick={toTelegramChannel}
-          >
-            <Telegram fontSize="inherit" />
-          </IconButton>
+          {/*<IconButton*/}
+          {/*  size="medium"*/}
+          {/*  color="inherit"*/}
+          {/*  title={t("Manual")}*/}
+          {/*  onClick={toGithubDoc}*/}
+          {/*>*/}
+          {/*  <HelpOutlineRounded fontSize="inherit" />*/}
+          {/*</IconButton>*/}
+          {/*<IconButton*/}
+          {/*  size="medium"*/}
+          {/*  color="inherit"*/}
+          {/*  title={t("TG Channel")}*/}
+          {/*  onClick={toTelegramChannel}*/}
+          {/*>*/}
+          {/*  <Telegram fontSize="inherit" />*/}
+          {/*</IconButton>*/}
 
-          <IconButton
-            size="medium"
-            color="inherit"
-            title={t("Github Repo")}
-            onClick={toGithubRepo}
-          >
-            <GitHub fontSize="inherit" />
-          </IconButton>
+          {/*<IconButton*/}
+          {/*  size="medium"*/}
+          {/*  color="inherit"*/}
+          {/*  title={t("Github Repo")}*/}
+          {/*  onClick={toGithubRepo}*/}
+          {/*>*/}
+          {/*  <GitHub fontSize="inherit" />*/}
+          {/*</IconButton>*/}
         </ButtonGroup>
       }
     >
