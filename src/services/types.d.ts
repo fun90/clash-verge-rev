@@ -42,31 +42,6 @@ interface IConfigData {
     "strict-route": boolean;
     mtu: number;
   };
-  dns?: {
-    enable?: boolean;
-    listen?: string;
-    "enhanced-mode"?: "fake-ip" | "redir-host";
-    "fake-ip-range"?: string;
-    "fake-ip-filter"?: string[];
-    "fake-ip-filter-mode"?: "blacklist" | "whitelist";
-    "prefer-h3"?: boolean;
-    "respect-rules"?: boolean;
-    nameserver?: string[];
-    fallback?: string[];
-    "default-nameserver"?: string[];
-    "proxy-server-nameserver"?: string[];
-    "direct-nameserver"?: string[];
-    "direct-nameserver-follow-policy"?: boolean;
-    "nameserver-policy"?: Record<string, any>;
-    "use-hosts"?: boolean;
-    "use-system-hosts"?: boolean;
-    "fallback-filter"?: {
-      geoip?: boolean;
-      "geoip-code"?: string;
-      ipcidr?: string[];
-      domain?: string[];
-    };
-  };
 }
 
 interface IRuleItem {
@@ -145,7 +120,6 @@ interface IConnectionsItem {
     sourcePort: string;
     destinationPort: string;
     destinationIP?: string;
-    remoteDestination?: string;
     process?: string;
     processPath?: string;
   };
@@ -207,7 +181,6 @@ interface IProfileOption {
   with_proxy?: boolean;
   self_proxy?: boolean;
   update_interval?: number;
-  timeout_seconds?: number;
   danger_accept_invalid_certs?: boolean;
   merge?: string;
   script?: string;
@@ -719,13 +692,8 @@ interface IProxyConfig
 interface IVergeConfig {
   app_log_level?: "trace" | "debug" | "info" | "warn" | "error" | string;
   language?: string;
-  tray_event?:
-    | "main_window"
-    | "tray_menu"
-    | "system_proxy"
-    | "tun_mode"
-    | string;
-  env_type?: "bash" | "cmd" | "powershell" | "fish" | string;
+  tray_event?: "main_window" | "system_proxy" | "tun_mode" | string;
+  env_type?: "bash" | "cmd" | "powershell" | string;
   startup_script?: string;
   start_page?: string;
   clash_core?: string;
@@ -739,18 +707,12 @@ interface IVergeConfig {
   sysproxy_tray_icon?: boolean;
   tun_tray_icon?: boolean;
   enable_tray_speed?: boolean;
-  enable_tray_icon?: boolean;
   enable_tun_mode?: boolean;
-  enable_auto_light_weight_mode?: boolean;
-  auto_light_weight_minutes?: number;
   enable_auto_launch?: boolean;
   enable_silent_start?: boolean;
   enable_system_proxy?: boolean;
-  enable_global_hotkey?: boolean;
-  enable_dns_settings?: boolean;
   proxy_auto_config?: boolean;
   pac_file_content?: string;
-  proxy_host?: string;
   enable_random_port?: boolean;
   verge_mixed_port?: number;
   verge_socks_port?: number;
@@ -785,14 +747,12 @@ interface IVergeConfig {
   default_latency_test?: string;
   default_latency_timeout?: number;
   enable_builtin_enhanced?: boolean;
-  auto_log_clean?: 0 | 1 | 2 | 3 | 4;
+  auto_log_clean?: 0 | 1 | 2 | 3;
   proxy_layout_column?: number;
   test_list?: IVergeTestItem[];
   webdav_url?: string;
   webdav_username?: string;
   webdav_password?: string;
-  home_cards?: Record<string, boolean>;
-  enable_hover_jump_navigator?: boolean;
 }
 
 interface IWebDavFile {

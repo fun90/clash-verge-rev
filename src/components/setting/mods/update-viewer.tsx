@@ -1,31 +1,24 @@
 import useSWR from "swr";
-import {
-  forwardRef,
-  useImperativeHandle,
-  useState,
-  useMemo,
-  useEffect,
-} from "react";
+import { forwardRef, useImperativeHandle, useState, useMemo } from "react";
 import { useLockFn } from "ahooks";
 import { Box, LinearProgress, Button } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check as checkUpdate } from "@tauri-apps/plugin-updater";
-import { BaseDialog, DialogRef } from "@/components/base";
+import { BaseDialog, DialogRef, Notice } from "@/components/base";
 import { useUpdateState, useSetUpdateState } from "@/services/states";
 import { Event, UnlistenFn } from "@tauri-apps/api/event";
 import { portableFlag } from "@/pages/_layout";
 import { open as openUrl } from "@tauri-apps/plugin-shell";
 import ReactMarkdown from "react-markdown";
 import { useListen } from "@/hooks/use-listen";
-import { showNotice } from "@/services/noticeService";
+
+let eventListener: UnlistenFn | null = null;
 
 export const UpdateViewer = forwardRef<DialogRef>((props, ref) => {
   const { t } = useTranslation();
 
   const [open, setOpen] = useState(false);
-  const [currentProgressListener, setCurrentProgressListener] =
-    useState<UnlistenFn | null>(null);
 
   const updateState = useUpdateState();
   const setUpdateState = useSetUpdateState();
@@ -62,22 +55,20 @@ export const UpdateViewer = forwardRef<DialogRef>((props, ref) => {
 
   const onUpdate = useLockFn(async () => {
     if (portableFlag) {
-      showNotice("error", t("Portable Updater Error"));
+      Notice.error(t("Portable Updater Error"));
       return;
     }
     if (!updateInfo?.body) return;
     if (breakChangeFlag) {
-      showNotice("error", t("Break Change Update Error"));
+      Notice.error(t("Break Change Update Error"));
       return;
     }
     if (updateState) return;
     setUpdateState(true);
-
-    if (currentProgressListener) {
-      currentProgressListener();
+    if (eventListener !== null) {
+      eventListener();
     }
-
-    const progressListener = await addListener(
+    eventListener = await addListener(
       "tauri://update-download-progress",
       (e: Event<any>) => {
         setTotal(e.payload.contentLength);
@@ -85,32 +76,17 @@ export const UpdateViewer = forwardRef<DialogRef>((props, ref) => {
         setDownloaded((a) => {
           return a + e.payload.chunkLength;
         });
-      },
+      }
     );
-    setCurrentProgressListener(() => progressListener);
-
     try {
       await updateInfo.downloadAndInstall();
       await relaunch();
     } catch (err: any) {
-      showNotice("error", err?.message || err.toString());
+      Notice.error(err?.message || err.toString());
     } finally {
       setUpdateState(false);
-      if (progressListener) {
-        progressListener();
-      }
-      setCurrentProgressListener(null);
     }
   });
-
-  useEffect(() => {
-    return () => {
-      if (currentProgressListener) {
-        console.log("UpdateViewer unmounting, cleaning up progress listener.");
-        currentProgressListener();
-      }
-    };
-  }, [currentProgressListener]);
 
   return (
     <BaseDialog
@@ -124,7 +100,7 @@ export const UpdateViewer = forwardRef<DialogRef>((props, ref) => {
               size="small"
               onClick={() => {
                 openUrl(
-                  `https://github.com/clash-verge-rev/clash-verge-rev/releases/tag/v${updateInfo?.version}`,
+                  `https://github.com/clash-verge-rev/clash-verge-rev/releases/tag/v${updateInfo?.version}`
                 );
               }}
             >

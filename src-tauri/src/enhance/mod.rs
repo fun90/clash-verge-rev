@@ -5,10 +5,17 @@ mod script;
 pub mod seq;
 mod tun;
 
-use self::{chain::*, field::*, merge::*, script::*, seq::*, tun::*};
-use crate::{config::Config, utils::tmpl};
+use self::chain::*;
+use self::field::*;
+use self::merge::*;
+use self::script::*;
+use self::seq::*;
+use self::tun::*;
+use crate::config::Config;
+use crate::utils::tmpl;
 use serde_yaml::Mapping;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
+use std::collections::HashSet;
 
 type ResultLog = Vec<(String, String)>;
 
@@ -18,16 +25,15 @@ pub async fn enhance() -> (Mapping, Vec<String>, HashMap<String, ResultLog>) {
     // config.yaml 的订阅
     let clash_config = { Config::clash().latest().0.clone() };
 
-    let (clash_core, enable_tun, enable_builtin, socks_enabled, http_enabled, enable_dns_settings) = {
+    let (clash_core, enable_tun, enable_builtin, socks_enabled, http_enabled) = {
         let verge = Config::verge();
         let verge = verge.latest();
         (
-            Some(verge.get_valid_clash_core()),
+            verge.clash_core.clone(),
             verge.enable_tun_mode.unwrap_or(false),
             verge.enable_builtin_enhanced.unwrap_or(true),
             verge.verge_socks_enabled.unwrap_or(false),
             verge.verge_http_enabled.unwrap_or(false),
-            verge.enable_dns_settings.unwrap_or(false),
         )
     };
     #[cfg(not(target_os = "windows"))]
@@ -255,40 +261,6 @@ pub async fn enhance() -> (Mapping, Vec<String>, HashMap<String, ResultLog>) {
 
     config = use_tun(config, enable_tun).await;
     config = use_sort(config);
-
-    // 应用独立的DNS配置（如果启用）
-    if enable_dns_settings {
-        use crate::utils::dirs;
-        use std::fs;
-
-        if let Ok(app_dir) = dirs::app_home_dir() {
-            let dns_path = app_dir.join("dns_config.yaml");
-
-            if dns_path.exists() {
-                if let Ok(dns_yaml) = fs::read_to_string(&dns_path) {
-                    if let Ok(dns_config) = serde_yaml::from_str::<serde_yaml::Mapping>(&dns_yaml) {
-                        // 处理hosts配置
-                        if let Some(hosts_value) = dns_config.get("hosts") {
-                            if hosts_value.is_mapping() {
-                                config.insert("hosts".into(), hosts_value.clone());
-                                log::info!(target: "app", "apply hosts configuration");
-                            }
-                        }
-
-                        if let Some(dns_value) = dns_config.get("dns") {
-                            if let Some(dns_mapping) = dns_value.as_mapping() {
-                                config.insert("dns".into(), dns_mapping.clone().into());
-                                log::info!(target: "app", "apply dns_config.yaml (dns section)");
-                            }
-                        } else {
-                            config.insert("dns".into(), dns_config.into());
-                            log::info!(target: "app", "apply dns_config.yaml");
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     let mut exists_set = HashSet::new();
     exists_set.extend(exists_keys);

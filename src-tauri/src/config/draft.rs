@@ -9,21 +9,13 @@ pub struct Draft<T: Clone + ToOwned> {
 
 macro_rules! draft_define {
     ($id: ident) => {
-        impl From<$id> for Draft<$id> {
-            fn from(data: $id) -> Self {
-                Draft {
-                    inner: Arc::new(Mutex::new((data, None))),
-                }
-            }
-        }
-
-        impl Draft<Box<$id>> {
+        impl Draft<$id> {
             #[allow(unused)]
-            pub fn data(&self) -> MappedMutexGuard<Box<$id>> {
+            pub fn data(&self) -> MappedMutexGuard<$id> {
                 MutexGuard::map(self.inner.lock(), |guard| &mut guard.0)
             }
 
-            pub fn latest(&self) -> MappedMutexGuard<Box<$id>> {
+            pub fn latest(&self) -> MappedMutexGuard<$id> {
                 MutexGuard::map(self.inner.lock(), |inner| {
                     if inner.1.is_none() {
                         &mut inner.0
@@ -33,7 +25,7 @@ macro_rules! draft_define {
                 })
             }
 
-            pub fn draft(&self) -> MappedMutexGuard<Box<$id>> {
+            pub fn draft(&self) -> MappedMutexGuard<$id> {
                 MutexGuard::map(self.inner.lock(), |inner| {
                     if inner.1.is_none() {
                         inner.1 = Some(inner.0.clone());
@@ -43,7 +35,7 @@ macro_rules! draft_define {
                 })
             }
 
-            pub fn apply(&self) -> Option<Box<$id>> {
+            pub fn apply(&self) -> Option<$id> {
                 let mut inner = self.inner.lock();
 
                 match inner.1.take() {
@@ -56,14 +48,14 @@ macro_rules! draft_define {
                 }
             }
 
-            pub fn discard(&self) -> Option<Box<$id>> {
+            pub fn discard(&self) -> Option<$id> {
                 let mut inner = self.inner.lock();
                 inner.1.take()
             }
         }
 
-        impl From<Box<$id>> for Draft<Box<$id>> {
-            fn from(data: Box<$id>) -> Self {
+        impl From<$id> for Draft<$id> {
+            fn from(data: $id) -> Self {
                 Draft {
                     inner: Arc::new(Mutex::new((data, None))),
                 }
@@ -79,12 +71,12 @@ draft_define!(IRuntime);
 draft_define!(IVerge);
 
 #[test]
-fn test_draft_box() {
-    let verge = Box::new(IVerge {
+fn test_draft() {
+    let verge = IVerge {
         enable_auto_launch: Some(true),
         enable_tun_mode: Some(false),
         ..IVerge::default()
-    });
+    };
 
     let draft = Draft::from(verge);
 
@@ -94,11 +86,10 @@ fn test_draft_box() {
     assert_eq!(draft.draft().enable_auto_launch, Some(true));
     assert_eq!(draft.draft().enable_tun_mode, Some(false));
 
-    {
-        let mut d = draft.draft();
-        d.enable_auto_launch = Some(false);
-        d.enable_tun_mode = Some(true);
-    }
+    let mut d = draft.draft();
+    d.enable_auto_launch = Some(false);
+    d.enable_tun_mode = Some(true);
+    drop(d);
 
     assert_eq!(draft.data().enable_auto_launch, Some(true));
     assert_eq!(draft.data().enable_tun_mode, Some(false));
@@ -118,17 +109,18 @@ fn test_draft_box() {
     assert_eq!(draft.draft().enable_auto_launch, Some(false));
     assert_eq!(draft.draft().enable_tun_mode, Some(true));
 
-    {
-        let mut d = draft.draft();
-        d.enable_auto_launch = Some(true);
-    }
+    let mut d = draft.draft();
+    d.enable_auto_launch = Some(true);
+    drop(d);
 
     assert_eq!(draft.data().enable_auto_launch, Some(false));
+
     assert_eq!(draft.draft().enable_auto_launch, Some(true));
 
     assert!(draft.discard().is_some());
 
     assert_eq!(draft.data().enable_auto_launch, Some(false));
+
     assert!(draft.discard().is_none());
 
     assert_eq!(draft.draft().enable_auto_launch, Some(false));

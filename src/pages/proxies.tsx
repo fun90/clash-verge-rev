@@ -4,7 +4,7 @@ import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
 import { Box, Button, ButtonGroup } from "@mui/material";
 import { closeAllConnections, getClashConfig } from "@/services/api";
-import { patchClashMode } from "@/services/cmds";
+import { patchClashConfig } from "@/services/cmds";
 import { useVerge } from "@/hooks/use-verge";
 import { BasePage } from "@/components/base";
 import { ProxyGroups } from "@/components/proxy/proxy-groups";
@@ -15,13 +15,7 @@ const ProxyPage = () => {
 
   const { data: clashConfig, mutate: mutateClash } = useSWR(
     "getClashConfig",
-    getClashConfig,
-    {
-      revalidateOnFocus: false,
-      revalidateIfStale: true,
-      dedupingInterval: 1000,
-      errorRetryInterval: 5000,
-    },
+    getClashConfig
   );
 
   const { verge } = useVerge();
@@ -35,7 +29,7 @@ const ProxyPage = () => {
     if (mode !== curMode && verge?.auto_close_connection) {
       closeAllConnections();
     }
-    await patchClashMode(mode);
+    await patchClashConfig({ mode });
     mutateClash();
   });
 
@@ -48,7 +42,7 @@ const ProxyPage = () => {
   return (
     <BasePage
       full
-      contentStyle={{ height: "101.5%" }}
+      contentStyle={{ height: "100%" }}
       title={t("Proxy Groups")}
       header={
         <Box display="flex" alignItems="center" gap={1}>

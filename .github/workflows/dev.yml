@@ -42,7 +42,8 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
-          save-if: false
+          cache-all-crates: true
+          cache-on-failure: true
 
       - name: Install Node
         uses: actions/setup-node@v4
@@ -57,7 +58,7 @@ jobs:
       - name: Pnpm install and check
         run: |
           pnpm i
-          pnpm run prebuild ${{ matrix.target }}
+          pnpm check ${{ matrix.target }}
 
       - name: Tauri build
         uses: tauri-apps/tauri-action@v0
@@ -66,12 +67,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
-#          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-#          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-#          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-#          APPLE_ID: ${{ secrets.APPLE_ID }}
-#          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-#          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tauriScript: pnpm
           args: --target ${{ matrix.target }} -b ${{ matrix.bundle }}

@@ -19,14 +19,12 @@ import {
   TextField,
 } from "@mui/material";
 import { createProfile, patchProfile } from "@/services/cmds";
-import { BaseDialog, Switch } from "@/components/base";
+import { BaseDialog, Notice, Switch } from "@/components/base";
 import { version } from "@root/package.json";
 import { FileInput } from "./file-input";
-import { useProfiles } from "@/hooks/use-profiles";
-import { showNotice } from "@/services/noticeService";
 
 interface Props {
-  onChange: (isActivating?: boolean) => void;
+  onChange: () => void;
 }
 
 export interface ProfileViewerRef {
@@ -42,7 +40,6 @@ export const ProfileViewer = forwardRef<ProfileViewerRef, Props>(
     const [open, setOpen] = useState(false);
     const [openType, setOpenType] = useState<"new" | "edit">("new");
     const [loading, setLoading] = useState(false);
-    const { profiles } = useProfiles();
 
     // file input
     const fileDataRef = useRef<string | null>(null);
@@ -89,19 +86,13 @@ export const ProfileViewer = forwardRef<ProfileViewerRef, Props>(
 
     const handleOk = useLockFn(
       formIns.handleSubmit(async (form) => {
-        if (form.option?.timeout_seconds) {
-          form.option.timeout_seconds = +form.option.timeout_seconds;
-        }
-
         setLoading(true);
         try {
-          // 基本验证
           if (!form.type) throw new Error("`Type` should not be null");
           if (form.type === "remote" && !form.url) {
             throw new Error("The URL should not be null");
           }
 
-          // 处理表单数据
           if (form.option?.update_interval) {
             form.option.update_interval = +form.option.update_interval;
           } else {
@@ -110,98 +101,34 @@ export const ProfileViewer = forwardRef<ProfileViewerRef, Props>(
           if (form.option?.user_agent === "") {
             delete form.option.user_agent;
           }
-
           const name = form.name || `${form.type} file`;
           const item = { ...form, name };
-          const isRemote = form.type === "remote";
-          const isUpdate = openType === "edit";
 
-          // 判断是否是当前激活的配置
-          const isActivating =
-            isUpdate && form.uid === (profiles?.current ?? "");
-
-          // 保存原始代理设置以便回退成功后恢复
-          const originalOptions = {
-            with_proxy: form.option?.with_proxy,
-            self_proxy: form.option?.self_proxy,
-          };
-
-          // 执行创建或更新操作，本地配置不需要回退机制
-          if (!isRemote) {
-            if (openType === "new") {
-              await createProfile(item, fileDataRef.current);
-            } else {
-              if (!form.uid) throw new Error("UID not found");
-              await patchProfile(form.uid, item);
-            }
-          } else {
-            // 远程配置使用回退机制
-            try {
-              // 尝试正常操作
-              if (openType === "new") {
-                await createProfile(item, fileDataRef.current);
-              } else {
-                if (!form.uid) throw new Error("UID not found");
-                await patchProfile(form.uid, item);
-              }
-            } catch (err) {
-              // 首次创建/更新失败，尝试使用自身代理
-              showNotice(
-                "info",
-                t("Profile creation failed, retrying with Clash proxy..."),
-              );
-
-              // 使用自身代理的配置
-              const retryItem = {
-                ...item,
-                option: {
-                  ...item.option,
-                  with_proxy: false,
-                  self_proxy: true,
-                },
-              };
-
-              // 使用自身代理再次尝试
-              if (openType === "new") {
-                await createProfile(retryItem, fileDataRef.current);
-              } else {
-                if (!form.uid) throw new Error("UID not found");
-                await patchProfile(form.uid, retryItem);
-
-                // 编辑模式下恢复原始代理设置
-                await patchProfile(form.uid, { option: originalOptions });
-              }
-
-              showNotice(
-                "success",
-                t("Profile creation succeeded with Clash proxy"),
-              );
-            }
+          // 创建
+          if (openType === "new") {
+            await createProfile(item, fileDataRef.current);
           }
-
-          // 成功后的操作
+          // 编辑
+          else {
+            if (!form.uid) throw new Error("UID not found");
+            await patchProfile(form.uid, item);
+          }
           setOpen(false);
+          setLoading(false);
           setTimeout(() => formIns.reset(), 500);
           fileDataRef.current = null;
-
-          // 优化：UI先关闭，异步通知父组件
-          setTimeout(() => {
-            props.onChange(isActivating);
-          }, 0);
+          props.onChange();
         } catch (err: any) {
-          showNotice("error", err.message || err.toString());
-        } finally {
+          Notice.error(err.message || err.toString());
           setLoading(false);
         }
-      }),
+      })
     );
 
     const handleClose = () => {
-      try {
-        setOpen(false);
-        fileDataRef.current = null;
-        setTimeout(() => formIns.reset(), 500);
-      } catch {}
+      setOpen(false);
+      fileDataRef.current = null;
+      setTimeout(() => formIns.reset(), 500);
     };
 
     const text = {
@@ -286,29 +213,6 @@ export const ProfileViewer = forwardRef<ProfileViewerRef, Props>(
                 />
               )}
             />
-
-            <Controller
-              name="option.timeout_seconds"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...text}
-                  {...field}
-                  type="number"
-                  placeholder="60"
-                  label={t("HTTP Request Timeout")}
-                  slotProps={{
-                    input: {
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          {t("seconds")}
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
-              )}
-            />
           </>
         )}
 
@@ -322,14 +226,10 @@ export const ProfileViewer = forwardRef<ProfileViewerRef, Props>(
                 {...field}
                 type="number"
                 label={t("Update Interval")}
-                slotProps={{
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        {t("mins")}
-                      </InputAdornment>
-                    ),
-                  },
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">{t("mins")}</InputAdornment>
+                  ),
                 }}
               />
             )}
@@ -383,7 +283,7 @@ export const ProfileViewer = forwardRef<ProfileViewerRef, Props>(
         )}
       </BaseDialog>
     );
-  },
+  }
 );
 
 const StyledBox = styled(Box)(() => ({

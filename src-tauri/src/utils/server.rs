@@ -1,12 +1,8 @@
 extern crate warp;
 
 use super::resolve;
-use crate::{
-    config::{Config, IVerge, DEFAULT_PAC},
-    logging_error,
-    process::AsyncHandler,
-    utils::logging::Type,
-};
+use crate::config::{Config, IVerge, DEFAULT_PAC};
+use crate::log_err;
 use anyhow::{bail, Result};
 use port_scanner::local_port_available;
 use std::convert::Infallible;
@@ -48,9 +44,9 @@ pub async fn check_singleton() -> Result<()> {
 pub fn embed_server() {
     let port = IVerge::get_singleton_port();
 
-    AsyncHandler::spawn(move || async move {
+    tauri::async_runtime::spawn(async move {
         let visible = warp::path!("commands" / "visible").map(move || {
-            resolve::create_window(false);
+            resolve::create_window();
             "ok"
         });
 
@@ -71,11 +67,7 @@ pub fn embed_server() {
                 .unwrap_or_default()
         });
         async fn scheme_handler(query: QueryParam) -> Result<impl warp::Reply, Infallible> {
-            logging_error!(
-                Type::Setup,
-                true,
-                resolve::resolve_scheme(query.param).await
-            );
+            log_err!(resolve::resolve_scheme(query.param).await);
             Ok("ok")
         }
 

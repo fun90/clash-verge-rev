@@ -4,10 +4,9 @@ import { useTranslation } from "react-i18next";
 import { Button, Box, Typography } from "@mui/material";
 import { useVerge } from "@/hooks/use-verge";
 import { openWebUrl } from "@/services/cmds";
-import { BaseDialog, BaseEmpty, DialogRef } from "@/components/base";
+import { BaseDialog, BaseEmpty, DialogRef, Notice } from "@/components/base";
 import { useClashInfo } from "@/hooks/use-clash";
 import { WebUIItem } from "./web-ui-item";
-import { showNotice } from "@/services/noticeService";
 
 export const WebUIViewer = forwardRef<DialogRef>((props, ref) => {
   const { t } = useTranslation();
@@ -26,7 +25,6 @@ export const WebUIViewer = forwardRef<DialogRef>((props, ref) => {
   const webUIList = verge?.web_ui_list || [
     "https://metacubex.github.io/metacubexd/#/setup?http=true&hostname=%host&port=%port&secret=%secret",
     "https://yacd.metacubex.one/?hostname=%host&port=%port&secret=%secret",
-    "https://board.zash.run.place/#/setup?http=true&hostname=%host&port=%port&secret=%secret",
   ];
 
   const handleAdd = useLockFn(async (value: string) => {
@@ -67,13 +65,13 @@ export const WebUIViewer = forwardRef<DialogRef>((props, ref) => {
         url = url.replaceAll("%port", port || "9097");
         url = url.replaceAll(
           "%secret",
-          encodeURIComponent(clashInfo.secret || ""),
+          encodeURIComponent(clashInfo.secret || "")
         );
       }
 
       await openWebUrl(url);
     } catch (e: any) {
-      showNotice("error", e.message || e.toString());
+      Notice.error(e.message || e.toString());
     }
   });
 

@@ -1,11 +1,10 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLockFn } from "ahooks";
-import { styled, Typography, Switch } from "@mui/material";
+import { styled, Typography } from "@mui/material";
 import { useVerge } from "@/hooks/use-verge";
-import { BaseDialog, DialogRef } from "@/components/base";
+import { BaseDialog, DialogRef, Notice } from "@/components/base";
 import { HotkeyInput } from "./hotkey-input";
-import { showNotice } from "@/services/noticeService";
 
 const ItemWrapper = styled("div")`
   display: flex;
@@ -21,7 +20,6 @@ const HOTKEY_FUNC = [
   "clash_mode_direct",
   "toggle_system_proxy",
   "toggle_tun_mode",
-  "entry_lightweight_mode",
 ];
 
 export const HotkeyViewer = forwardRef<DialogRef>((props, ref) => {
@@ -31,9 +29,6 @@ export const HotkeyViewer = forwardRef<DialogRef>((props, ref) => {
   const { verge, patchVerge } = useVerge();
 
   const [hotkeyMap, setHotkeyMap] = useState<Record<string, string[]>>({});
-  const [enableGlobalHotkey, setEnableHotkey] = useState(
-    verge?.enable_global_hotkey ?? true,
-  );
 
   useImperativeHandle(ref, () => ({
     open: () => {
@@ -74,13 +69,10 @@ export const HotkeyViewer = forwardRef<DialogRef>((props, ref) => {
       .filter(Boolean);
 
     try {
-      await patchVerge({
-        hotkeys,
-        enable_global_hotkey: enableGlobalHotkey,
-      });
+      await patchVerge({ hotkeys });
       setOpen(false);
     } catch (err: any) {
-      showNotice("error", err.toString());
+      Notice.error(err.message || err.toString());
     }
   });
 
@@ -88,22 +80,13 @@ export const HotkeyViewer = forwardRef<DialogRef>((props, ref) => {
     <BaseDialog
       open={open}
       title={t("Hotkey Setting")}
-      contentSx={{ width: 450, maxHeight: 380 }}
+      contentSx={{ width: 450, maxHeight: 330 }}
       okBtn={t("Save")}
       cancelBtn={t("Cancel")}
       onClose={() => setOpen(false)}
       onCancel={() => setOpen(false)}
       onOk={onSave}
     >
-      <ItemWrapper style={{ marginBottom: 16 }}>
-        <Typography>{t("Enable Global Hotkey")}</Typography>
-        <Switch
-          edge="end"
-          checked={enableGlobalHotkey}
-          onChange={(e) => setEnableHotkey(e.target.checked)}
-        />
-      </ItemWrapper>
-
       {HOTKEY_FUNC.map((func) => (
         <ItemWrapper key={func}>
           <Typography>{t(func)}</Typography>

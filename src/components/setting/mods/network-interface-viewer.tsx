@@ -1,11 +1,10 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { BaseDialog, DialogRef } from "@/components/base";
+import { BaseDialog, DialogRef, Notice } from "@/components/base";
 import { getNetworkInterfacesInfo } from "@/services/cmds";
-import { alpha, Box, Button, IconButton } from "@mui/material";
+import { alpha, Box, Button, Chip, IconButton } from "@mui/material";
 import { ContentCopyRounded } from "@mui/icons-material";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
-import { showNotice } from "@/services/noticeService";
 
 export const NetworkInterfaceViewer = forwardRef<DialogRef>((props, ref) => {
   const { t } = useTranslation();
@@ -48,7 +47,7 @@ export const NetworkInterfaceViewer = forwardRef<DialogRef>((props, ref) => {
           </Box>
         </Box>
       }
-      contentSx={{ width: 450 }}
+      contentSx={{ width: 450, maxHeight: 330 }}
       disableOk
       cancelBtn={t("Close")}
       onCancel={() => setOpen(false)}
@@ -67,7 +66,7 @@ export const NetworkInterfaceViewer = forwardRef<DialogRef>((props, ref) => {
                         label={t("Ip Address")}
                         content={address.V4.ip}
                       />
-                    ),
+                    )
                 )}
                 <AddressDisplay
                   label={t("Mac Address")}
@@ -85,7 +84,7 @@ export const NetworkInterfaceViewer = forwardRef<DialogRef>((props, ref) => {
                         label={t("Ip Address")}
                         content={address.V6.ip}
                       />
-                    ),
+                    )
                 )}
                 <AddressDisplay
                   label={t("Mac Address")}
@@ -129,7 +128,7 @@ const AddressDisplay = (props: { label: string; content: string }) => {
           size="small"
           onClick={async () => {
             await writeText(props.content);
-            showNotice("success", t("Copy Success"));
+            Notice.success(t("Copy Success"));
           }}
         >
           <ContentCopyRounded sx={{ fontSize: "18px" }} />

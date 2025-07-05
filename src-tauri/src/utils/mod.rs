@@ -1,11 +1,8 @@
-pub mod autostart;
 pub mod dirs;
+pub mod error;
 pub mod help;
-pub mod i18n;
 pub mod init;
-pub mod logging;
-pub mod network;
 pub mod resolve;
 pub mod server;
 pub mod tmpl;
-pub mod window_manager;
+pub mod i18n;

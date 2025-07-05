@@ -12,6 +12,7 @@ import {
   TableRow,
   TablePagination,
 } from "@mui/material";
+import { Notice } from "@/components/base";
 import { Typography } from "@mui/material";
 import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
@@ -23,7 +24,6 @@ import {
 } from "@/services/cmds";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RestoreIcon from "@mui/icons-material/Restore";
-import { showNotice } from "@/services/noticeService";
 
 export type BackupFile = IWebDavFile & {
   platform: string;
@@ -38,7 +38,7 @@ export interface BackupTableViewerProps {
   page: number;
   onPageChange: (
     event: React.MouseEvent<HTMLButtonElement> | null,
-    page: number,
+    page: number
   ) => void;
   total: number;
   onRefresh: () => Promise<void>;
@@ -61,7 +61,7 @@ export const BackupTableViewer = memo(
 
     const handleRestore = useLockFn(async (filename: string) => {
       await restoreWebDavBackup(filename).then(() => {
-        showNotice("success", t("Restore Success, App will restart in 1s"));
+        Notice.success(t("Restore Success, App will restart in 1s"));
       });
       await restartApp();
     });
@@ -109,7 +109,7 @@ export const BackupTableViewer = memo(
                         onClick={async (e: React.MouseEvent) => {
                           e.preventDefault();
                           const confirmed = await window.confirm(
-                            t("Confirm to delete this backup file?"),
+                            t("Confirm to delete this backup file?")
                           );
                           if (confirmed) {
                             await handleDelete(file.filename);
@@ -132,7 +132,7 @@ export const BackupTableViewer = memo(
                         onClick={async (e: React.MouseEvent) => {
                           e.preventDefault();
                           const confirmed = await window.confirm(
-                            t("Confirm to restore this backup file?"),
+                            t("Confirm to restore this backup file?")
                           );
                           if (confirmed) {
                             await handleRestore(file.filename);
@@ -181,7 +181,7 @@ export const BackupTableViewer = memo(
         />
       </TableContainer>
     );
-  },
+  }
 );
 
 function LinuxIcon(props: SVGProps<SVGSVGElement>) {

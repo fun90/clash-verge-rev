@@ -1,5 +1,4 @@
 {
-  "version": "2.3.1",
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "bundle": {
     "active": true,
@@ -17,7 +16,7 @@
     "copyright": "GNU General Public License v3.0",
     "category": "DeveloperTool",
     "shortDescription": "Clash Verge Rev",
-    "createUpdaterArtifacts": true
+    "createUpdaterArtifacts": "v1Compatible"
   },
   "build": {
     "beforeBuildCommand": "pnpm run web:build",
@@ -26,17 +25,15 @@
     "devUrl": "http://localhost:3000/"
   },
   "productName": "Clash Verge",
+  "version": "2.0.3",
   "identifier": "io.github.clash-verge-rev.clash-verge-rev",
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZCRURCREJFNjM5MTRBMDYKUldRR1NwRmp2cjN0YXkyL3ZoODd1bFI3V0FOTXlVM2JyRmVaY0ZlUWV4ZlN1SjN3KzFpUGxBRysK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc4RTUyODQwRjg1NkE0NjgKUldSb3BGYjRRQ2psZU81b0JXQ3dwZVUyMytxWTU3a2lHdlpnR25oQjlJd3pNZ01wV2kxQ0p0dk8K",
       "endpoints": [
         "https://mirror.ghproxy.com/https://github.com/fun90/clash-verge-rev/releases/download/updater/update-proxy.json",
         "https://github.com/fun90/clash-verge-rev/releases/download/updater/update.json"
-      ],
-      "windows": {
-        "installMode": "basicUi"
-      }
+      ]
     },
     "deep-link": {
       "desktop": {

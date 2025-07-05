@@ -22,9 +22,8 @@ import {
   readProfileFile,
   updateProfile,
   saveProfileFile,
-  getNextUpdateTime,
 } from "@/services/cmds";
-import { showNotice } from "@/services/noticeService";
+import { Notice } from "@/components/base";
 import { GroupsEditorViewer } from "@/components/profile/groups-editor-viewer";
 import { RulesEditorViewer } from "@/components/profile/rules-editor-viewer";
 import { EditorViewer } from "@/components/profile/editor-viewer";
@@ -67,114 +66,7 @@ export const ProfileItem = (props: Props) => {
   const loadingCache = useLoadingCache();
   const setLoadingCache = useSetLoadingCache();
 
-  // 新增状态：是否显示下次更新时间
-  const [showNextUpdate, setShowNextUpdate] = useState(false);
-  const [nextUpdateTime, setNextUpdateTime] = useState("");
-
   const { uid, name = "Profile", extra, updated = 0, option } = itemData;
-
-  // 获取下次更新时间的函数
-  const fetchNextUpdateTime = useLockFn(async (forceRefresh = false) => {
-    if (
-      itemData.option?.update_interval &&
-      itemData.option.update_interval > 0
-    ) {
-      try {
-        console.log(`尝试获取配置 ${itemData.uid} 的下次更新时间`);
-
-        // 如果需要强制刷新，先触发Timer.refresh()
-        if (forceRefresh) {
-          // 这里可以通过一个新的API来触发刷新，但目前我们依赖patch_profile中的刷新
-          console.log(`强制刷新定时器任务`);
-        }
-
-        const nextUpdate = await getNextUpdateTime(itemData.uid);
-        console.log(`获取到下次更新时间结果:`, nextUpdate);
-
-        if (nextUpdate) {
-          const nextUpdateDate = dayjs(nextUpdate * 1000);
-          const now = dayjs();
-
-          // 如果已经过期，显示"更新失败"
-          if (nextUpdateDate.isBefore(now)) {
-            setNextUpdateTime(t("Last Update failed"));
-          } else {
-            // 否则显示剩余时间
-            const diffMinutes = nextUpdateDate.diff(now, "minute");
-
-            if (diffMinutes < 60) {
-              if (diffMinutes <= 0) {
-                setNextUpdateTime(`${t("Next Up")} <1m`);
-              } else {
-                setNextUpdateTime(`${t("Next Up")} ${diffMinutes}m`);
-              }
-            } else {
-              const hours = Math.floor(diffMinutes / 60);
-              const mins = diffMinutes % 60;
-              setNextUpdateTime(`${t("Next Up")} ${hours}h ${mins}m`);
-            }
-          }
-        } else {
-          console.log(`返回的下次更新时间为空`);
-          setNextUpdateTime(t("No schedule"));
-        }
-      } catch (err) {
-        console.error(`获取下次更新时间出错:`, err);
-        setNextUpdateTime(t("Unknown"));
-      }
-    } else {
-      console.log(`该配置未设置更新间隔或间隔为0`);
-      setNextUpdateTime(t("Auto update disabled"));
-    }
-  });
-
-  // 切换显示模式的函数
-  const toggleUpdateTimeDisplay = (e: React.MouseEvent) => {
-    e.stopPropagation();
-
-    if (!showNextUpdate) {
-      fetchNextUpdateTime();
-    }
-
-    setShowNextUpdate(!showNextUpdate);
-  };
-
-  // 当组件加载或更新间隔变化时更新下次更新时间
-  useEffect(() => {
-    if (showNextUpdate) {
-      fetchNextUpdateTime();
-    }
-  }, [showNextUpdate, itemData.option?.update_interval, updated]);
-
-  // 订阅定时器更新事件
-  useEffect(() => {
-    // 处理定时器更新事件 - 这个事件专门用于通知定时器变更
-    const handleTimerUpdate = (event: any) => {
-      const updatedUid = event.payload as string;
-
-      // 只有当更新的是当前配置时才刷新显示
-      if (updatedUid === itemData.uid && showNextUpdate) {
-        console.log(`收到定时器更新事件: uid=${updatedUid}`);
-        setTimeout(() => {
-          fetchNextUpdateTime(true);
-        }, 1000);
-      }
-    };
-
-    // 只注册定时器更新事件监听
-    window.addEventListener(
-      "verge://timer-updated",
-      handleTimerUpdate as EventListener,
-    );
-
-    return () => {
-      // 清理事件监听
-      window.removeEventListener(
-        "verge://timer-updated",
-        handleTimerUpdate as EventListener,
-      );
-    };
-  }, [showNextUpdate, itemData.uid]);
 
   // local file mode
   // remote file mode
@@ -189,7 +81,7 @@ export const ProfileItem = (props: Props) => {
   const expire = parseExpire(extra?.expire);
   const progress = Math.min(
     Math.round(((download + upload) * 100) / (total + 0.01)) + 1,
-    100,
+    100
   );
 
   const loading = loadingCache[itemData.uid] ?? false;
@@ -280,22 +172,24 @@ export const ProfileItem = (props: Props) => {
     try {
       await viewProfile(itemData.uid);
     } catch (err: any) {
-      showNotice("error", err?.message || err.toString());
+      Notice.error(err?.message || err.toString());
     }
   });
 
   /// 0 不使用任何代理
   /// 1 使用订阅好的代理
   /// 2 至少使用一个代理，根据订阅，如果没订阅，默认使用系统代理
-  const onUpdate = useLockFn(async (type: 0 | 1 | 2): Promise<void> => {
+  const onUpdate = useLockFn(async (type: 0 | 1 | 2) => {
     setAnchorEl(null);
     setLoadingCache((cache) => ({ ...cache, [itemData.uid]: true }));
 
-    // 根据类型设置初始更新选项
     const option: Partial<IProfileOption> = {};
+
     if (type === 0) {
       option.with_proxy = false;
       option.self_proxy = false;
+    } else if (type === 1) {
+      // nothing
     } else if (type === 2) {
       if (itemData.option?.self_proxy) {
         option.with_proxy = false;
@@ -307,15 +201,13 @@ export const ProfileItem = (props: Props) => {
     }
 
     try {
-      // 调用后端更新（后端会自动处理回退逻辑）
       await updateProfile(itemData.uid, option);
-
-      // 更新成功，刷新列表
-      showNotice("success", t("Update subscription successfully"));
       mutate("getProfiles");
     } catch (err: any) {
-      // 更新完全失败（包括后端的回退尝试）
-      // 不需要做处理，后端会通过事件通知系统发送错误
+      const errmsg = err?.message || err.toString();
+      Notice.error(
+        errmsg.replace(/error sending request for url (\S+?): /, "")
+      );
     } finally {
       setLoadingCache((cache) => ({ ...cache, [itemData.uid]: false }));
     }
@@ -354,7 +246,7 @@ export const ProfileItem = (props: Props) => {
     },
     { label: "Open File", handler: onOpenFile, disabled: false },
     { label: "Update", handler: () => onUpdate(0), disabled: false },
-    { label: "Update via proxy", handler: () => onUpdate(2), disabled: false },
+    { label: "Update(Proxy)", handler: () => onUpdate(2), disabled: false },
     {
       label: "Delete",
       handler: () => {
@@ -410,47 +302,6 @@ export const ProfileItem = (props: Props) => {
     alignItems: "center",
     justifyContent: "space-between",
   };
-
-  // 监听自动更新事件
-  useEffect(() => {
-    const handleUpdateStarted = (event: CustomEvent) => {
-      if (event.detail.uid === itemData.uid) {
-        setLoadingCache((cache) => ({ ...cache, [itemData.uid]: true }));
-      }
-    };
-
-    const handleUpdateCompleted = (event: CustomEvent) => {
-      if (event.detail.uid === itemData.uid) {
-        setLoadingCache((cache) => ({ ...cache, [itemData.uid]: false }));
-        // 更新完成后刷新显示
-        if (showNextUpdate) {
-          fetchNextUpdateTime();
-        }
-      }
-    };
-
-    // 注册事件监听
-    window.addEventListener(
-      "profile-update-started",
-      handleUpdateStarted as EventListener,
-    );
-    window.addEventListener(
-      "profile-update-completed",
-      handleUpdateCompleted as EventListener,
-    );
-
-    return () => {
-      // 清理事件监听
-      window.removeEventListener(
-        "profile-update-started",
-        handleUpdateStarted as EventListener,
-      );
-      window.removeEventListener(
-        "profile-update-completed",
-        handleUpdateCompleted as EventListener,
-      );
-    };
-  }, [itemData.uid, showNextUpdate]);
 
   return (
     <Box
@@ -562,42 +413,15 @@ export const ProfileItem = (props: Props) => {
                 )
               )}
               {hasUrl && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    ml: "auto",
-                  }}
+                <Typography
+                  noWrap
+                  flex="1 0 auto"
+                  fontSize={14}
+                  textAlign="right"
+                  title={`${t("Update Time")}: ${parseExpire(updated)}`}
                 >
-                  <Typography
-                    noWrap
-                    component="span"
-                    fontSize={14}
-                    textAlign="right"
-                    title={
-                      showNextUpdate
-                        ? t("Click to show last update time")
-                        : `${t("Update Time")}: ${parseExpire(updated)}\n${t("Click to show next update")}`
-                    }
-                    sx={{
-                      cursor: "pointer",
-                      display: "inline-block",
-                      borderBottom: "1px dashed transparent",
-                      transition: "all 0.2s",
-                      "&:hover": {
-                        borderBottomColor: "primary.main",
-                        color: "primary.main",
-                      },
-                    }}
-                    onClick={toggleUpdateTimeDisplay}
-                  >
-                    {showNextUpdate
-                      ? nextUpdateTime
-                      : updated > 0
-                        ? dayjs(updated * 1000).fromNow()
-                        : ""}
-                  </Typography>
-                </Box>
+                  {updated > 0 ? dayjs(updated * 1000).fromNow() : ""}
+                </Typography>
               )}
             </>
           }

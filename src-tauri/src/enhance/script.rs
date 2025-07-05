@@ -33,40 +33,37 @@ pub fn use_script(
     }
     let _ = context.eval(Source::from_bytes(
         r#"var console = Object.freeze({
-        log(data){__verge_log__("log",JSON.stringify(data, null, 2))},
-        info(data){__verge_log__("info",JSON.stringify(data, null, 2))},
-        error(data){__verge_log__("error",JSON.stringify(data, null, 2))},
-        debug(data){__verge_log__("debug",JSON.stringify(data, null, 2))},
-        warn(data){__verge_log__("warn",JSON.stringify(data, null, 2))},
-        table(data){__verge_log__("table",JSON.stringify(data, null, 2))},
+        log(data){__verge_log__("log",JSON.stringify(data))}, 
+        info(data){__verge_log__("info",JSON.stringify(data))}, 
+        error(data){__verge_log__("error",JSON.stringify(data))},
+        debug(data){__verge_log__("debug",JSON.stringify(data))},
       });"#,
     ));
 
     let config = use_lowercase(config.clone());
     let config_str = serde_json::to_string(&config)?;
 
-    // 仅处理 name 参数中的特殊字符
-    let safe_name = escape_js_string_for_single_quote(&name);
-
     let code = format!(
         r#"try{{
         {script};
-        JSON.stringify(main({config_str},'{safe_name}')||'')
+        JSON.stringify(main({config_str},'{name}')||'')
       }} catch(err) {{
         `__error_flag__ ${{err.toString()}}`
       }}"#
     );
-
     if let Ok(result) = context.eval(Source::from_bytes(code.as_str())) {
         if !result.is_string() {
             anyhow::bail!("main function should return object");
         }
         let result = result.to_string(&mut context).unwrap();
         let result = result.to_std_string().unwrap();
-
-        // 直接解析JSON结果,不做其他解析
-        let res: Result<Mapping, Error> = parse_json_safely(&result);
-
+        if result.starts_with("__error_flag__") {
+            anyhow::bail!(result[15..].to_owned());
+        }
+        if result == "\"\"" {
+            anyhow::bail!("main function should return object");
+        }
+        let res: Result<Mapping, Error> = Ok(serde_json::from_str::<Mapping>(result.as_str())?);
         let mut out = outputs.lock().unwrap();
         match res {
             Ok(config) => Ok((use_lowercase(config), out.to_vec())),
@@ -78,27 +75,6 @@ pub fn use_script(
     } else {
         anyhow::bail!("main function should return object");
     }
-}
-
-fn parse_json_safely(json_str: &str) -> Result<Mapping, Error> {
-    let json_str = strip_outer_quotes(json_str);
-
-    Ok(serde_json::from_str::<Mapping>(json_str)?)
-}
-
-// 移除字符串外层的引号
-fn strip_outer_quotes(s: &str) -> &str {
-    let s = s.trim();
-    if (s.starts_with('"') && s.ends_with('"')) || (s.starts_with('\'') && s.ends_with('\'')) {
-        &s[1..s.len() - 1]
-    } else {
-        s
-    }
-}
-
-// 转义单引号和反斜杠，用于单引号包裹的JavaScript字符串
-fn escape_js_string_for_single_quote(s: &str) -> String {
-    s.replace('\\', "\\\\").replace('\'', "\\'")
 }
 
 #[test]
@@ -128,31 +104,6 @@ fn test_script() {
     let (config, results) = use_script(script.into(), config, "".to_string()).unwrap();
 
     let _ = serde_yaml::to_string(&config).unwrap();
-    let yaml_config_size = std::mem::size_of_val(&config);
-    dbg!(yaml_config_size);
-    let box_yaml_config_size = std::mem::size_of_val(&Box::new(config));
-    dbg!(box_yaml_config_size);
+
     dbg!(results);
-    assert!(box_yaml_config_size < yaml_config_size);
-}
-
-// 测试特殊字符转义功能
-#[test]
-fn test_escape_unescape() {
-    let test_string = r#"Hello "World"!\nThis is a test with \u00A9 copyright symbol."#;
-    let escaped = escape_js_string_for_single_quote(test_string);
-    println!("Original: {}", test_string);
-    println!("Escaped: {}", escaped);
-
-    let json_str = r#"{"key":"value","nested":{"key":"value"}}"#;
-    let parsed = parse_json_safely(json_str).unwrap();
-
-    assert!(parsed.contains_key("key"));
-    assert!(parsed.contains_key("nested"));
-
-    let quoted_json_str = r#""{"key":"value","nested":{"key":"value"}}""#;
-    let parsed_quoted = parse_json_safely(quoted_json_str).unwrap();
-
-    assert!(parsed_quoted.contains_key("key"));
-    assert!(parsed_quoted.contains_key("nested"));
 }

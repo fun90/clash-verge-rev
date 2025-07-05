@@ -8,8 +8,7 @@ import {
   PlayCircleOutlineRounded,
   PauseCircleOutlineRounded,
 } from "@mui/icons-material";
-import { LogLevel } from "@/hooks/use-log-data";
-import { useClashInfo } from "@/hooks/use-clash";
+import { useLogData, LogLevel, clearLogs } from "@/hooks/use-log-data";
 import { useEnableLog } from "@/services/states";
 import { BaseEmpty, BasePage } from "@/components/base";
 import LogItem from "@/components/log/log-item";
@@ -17,74 +16,42 @@ import { useTheme } from "@mui/material/styles";
 import { BaseSearchBox } from "@/components/base/base-search-box";
 import { BaseStyledSelect } from "@/components/base/base-styled-select";
 import { SearchState } from "@/components/base/base-search-box";
-import {
-  useGlobalLogData,
-  clearGlobalLogs,
-  changeLogLevel,
-  toggleLogEnabled,
-} from "@/services/global-log-service";
 
 const LogPage = () => {
   const { t } = useTranslation();
   const [enableLog, setEnableLog] = useEnableLog();
-  const { clashInfo } = useClashInfo();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const [logLevel, setLogLevel] = useLocalStorage<LogLevel>(
     "log:log-level",
-    "info",
+    "info"
   );
   const [match, setMatch] = useState(() => (_: string) => true);
-  const logData = useGlobalLogData(logLevel);
+  const logData = useLogData(logLevel);
   const [searchState, setSearchState] = useState<SearchState>();
 
   const filterLogs = useMemo(() => {
     return logData
-      ? logData.filter((data) => {
-          // 构建完整的搜索文本，包含时间、类型和内容
-          const searchText =
-            `${data.time || ""} ${data.type} ${data.payload}`.toLowerCase();
-
-          return logLevel === "all"
-            ? match(searchText)
-            : data.type.toLowerCase() === logLevel && match(searchText);
-        })
+      ? logData.filter((data) =>
+          logLevel === "all"
+            ? match(data.payload)
+            : data.type.includes(logLevel) && match(data.payload)
+        )
       : [];
   }, [logData, logLevel, match]);
-
-  const handleLogLevelChange = (newLevel: LogLevel) => {
-    setLogLevel(newLevel);
-    if (clashInfo) {
-      const { server = "", secret = "" } = clashInfo;
-      changeLogLevel(newLevel, server, secret);
-    }
-  };
-
-  const handleToggleLog = () => {
-    if (clashInfo) {
-      const { server = "", secret = "" } = clashInfo;
-      toggleLogEnabled(server, secret);
-      setEnableLog(!enableLog);
-    }
-  };
 
   return (
     <BasePage
       full
       title={t("Logs")}
-      contentStyle={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "auto",
-      }}
+      contentStyle={{ height: "100%" }}
       header={
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <IconButton
-            title={t(enableLog ? "Pause" : "Resume")}
+            title={t("Pause")}
             size="small"
             color="inherit"
-            onClick={handleToggleLog}
+            onClick={() => setEnableLog((e) => !e)}
           >
             {enableLog ? (
               <PauseCircleOutlineRounded />
@@ -98,7 +65,7 @@ const LogPage = () => {
               size="small"
               variant="contained"
               onClick={() => {
-                clearGlobalLogs();
+                clearLogs(logLevel);
               }}
             >
               {t("Clear")}
@@ -112,14 +79,14 @@ const LogPage = () => {
           pt: 1,
           mb: 0.5,
           mx: "10px",
-          height: "39px",
+          height: "36px",
           display: "flex",
           alignItems: "center",
         }}
       >
         <BaseStyledSelect
           value={logLevel}
-          onChange={(e) => handleLogLevelChange(e.target.value as LogLevel)}
+          onChange={(e) => setLogLevel(e.target.value as LogLevel)}
         >
           <MenuItem value="all">ALL</MenuItem>
           <MenuItem value="info">INFO</MenuItem>
@@ -135,21 +102,27 @@ const LogPage = () => {
         />
       </Box>
 
-      {filterLogs.length > 0 ? (
-        <Virtuoso
-          initialTopMostItemIndex={999}
-          data={filterLogs}
-          style={{
-            flex: 1,
-          }}
-          itemContent={(index, item) => (
-            <LogItem value={item} searchState={searchState} />
-          )}
-          followOutput={"smooth"}
-        />
-      ) : (
-        <BaseEmpty />
-      )}
+      <Box
+        height="calc(100% - 65px)"
+        sx={{
+          margin: "10px",
+          borderRadius: "8px",
+          bgcolor: isDark ? "#282a36" : "#ffffff",
+        }}
+      >
+        {filterLogs.length > 0 ? (
+          <Virtuoso
+            initialTopMostItemIndex={999}
+            data={filterLogs}
+            itemContent={(index, item) => (
+              <LogItem value={item} searchState={searchState} />
+            )}
+            followOutput={"smooth"}
+          />
+        ) : (
+          <BaseEmpty />
+        )}
+      </Box>
     </BasePage>
   );
 };

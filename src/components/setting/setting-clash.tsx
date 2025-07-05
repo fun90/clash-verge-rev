@@ -1,26 +1,25 @@
-import { DialogRef, Switch } from "@/components/base";
-import { TooltipIcon } from "@/components/base/base-tooltip-icon";
-import { useClash } from "@/hooks/use-clash";
-import { useListen } from "@/hooks/use-listen";
-import { useVerge } from "@/hooks/use-verge";
-import { updateGeoData } from "@/services/api";
-import { invoke_uwp_tool } from "@/services/cmds";
-import { showNotice } from "@/services/noticeService";
-import getSystem from "@/utils/get-system";
-import { LanRounded, SettingsRounded } from "@mui/icons-material";
-import { MenuItem, Select, TextField, Typography } from "@mui/material";
-import { invoke } from "@tauri-apps/api/core";
-import { useLockFn } from "ahooks";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { ClashCoreViewer } from "./mods/clash-core-viewer";
+import { TextField, Select, MenuItem, Typography } from "@mui/material";
+import {
+  SettingsRounded,
+  ShuffleRounded,
+  LanRounded,
+} from "@mui/icons-material";
+import { DialogRef, Notice, Switch } from "@/components/base";
+import { useClash } from "@/hooks/use-clash";
+import { GuardState } from "./mods/guard-state";
+import { WebUIViewer } from "./mods/web-ui-viewer";
 import { ClashPortViewer } from "./mods/clash-port-viewer";
 import { ControllerViewer } from "./mods/controller-viewer";
-import { DnsViewer } from "./mods/dns-viewer";
-import { GuardState } from "./mods/guard-state";
+import { SettingList, SettingItem } from "./mods/setting-comp";
+import { ClashCoreViewer } from "./mods/clash-core-viewer";
+import { invoke_uwp_tool } from "@/services/cmds";
+import getSystem from "@/utils/get-system";
+import { useVerge } from "@/hooks/use-verge";
+import { updateGeoData } from "@/services/api";
+import { TooltipIcon } from "@/components/base/base-tooltip-icon";
 import { NetworkInterfaceViewer } from "./mods/network-interface-viewer";
-import { SettingItem, SettingList } from "./mods/setting-comp";
-import { WebUIViewer } from "./mods/web-ui-viewer";
 
 const isWIN = getSystem() === "windows";
 
@@ -39,24 +38,15 @@ const SettingClash = ({ onError }: Props) => {
     "allow-lan": allowLan,
     "log-level": logLevel,
     "unified-delay": unifiedDelay,
-    dns,
   } = clash ?? {};
 
   const { enable_random_port = false, verge_mixed_port } = verge ?? {};
-
-  // 独立跟踪DNS设置开关状态
-  const [dnsSettingsEnabled, setDnsSettingsEnabled] = useState(() => {
-    return verge?.enable_dns_settings ?? false;
-  });
-
-  const { addListener } = useListen();
 
   const webRef = useRef<DialogRef>(null);
   const portRef = useRef<DialogRef>(null);
   const ctrlRef = useRef<DialogRef>(null);
   const coreRef = useRef<DialogRef>(null);
   const networkRef = useRef<DialogRef>(null);
-  const dnsRef = useRef<DialogRef>(null);
 
   const onSwitchFormat = (_e: any, value: boolean) => value;
   const onChangeData = (patch: Partial<IConfigData>) => {
@@ -68,30 +58,11 @@ const SettingClash = ({ onError }: Props) => {
   const onUpdateGeo = async () => {
     try {
       await updateGeoData();
-      showNotice("success", t("GeoData Updated"));
+      Notice.success(t("GeoData Updated"));
     } catch (err: any) {
-      showNotice("error", err?.response.data.message || err.toString());
+      Notice.error(err?.response.data.message || err.toString());
     }
   };
-
-  // 实现DNS设置开关处理函数
-  const handleDnsToggle = useLockFn(async (enable: boolean) => {
-    try {
-      setDnsSettingsEnabled(enable);
-      localStorage.setItem("dns_settings_enabled", String(enable));
-      await patchVerge({ enable_dns_settings: enable });
-      await invoke("apply_dns_config", { apply: enable });
-      setTimeout(() => {
-        mutateClash();
-      }, 500);
-    } catch (err: any) {
-      setDnsSettingsEnabled(!enable);
-      localStorage.setItem("dns_settings_enabled", String(!enable));
-      showNotice("error", err.message || err.toString());
-      await patchVerge({ enable_dns_settings: !enable }).catch(() => {});
-      throw err;
-    }
-  });
 
   return (
     <SettingList title={t("Clash Setting")}>
@@ -100,7 +71,6 @@ const SettingClash = ({ onError }: Props) => {
       <ControllerViewer ref={ctrlRef} />
       <ClashCoreViewer ref={coreRef} />
       <NetworkInterfaceViewer ref={networkRef} />
-      <DnsViewer ref={dnsRef} />
 
       <SettingItem
         label={t("Allow Lan")}
@@ -125,22 +95,6 @@ const SettingClash = ({ onError }: Props) => {
         >
           <Switch edge="end" />
         </GuardState>
-      </SettingItem>
-
-      <SettingItem
-        label={t("DNS Overwrite")}
-        extra={
-          <TooltipIcon
-            icon={SettingsRounded}
-            onClick={() => dnsRef.current?.open()}
-          />
-        }
-      >
-        <Switch
-          edge="end"
-          checked={dnsSettingsEnabled}
-          onChange={(_, checked) => handleDnsToggle(checked)}
-        />
       </SettingItem>
 
       <SettingItem label={t("IPv6")}>
@@ -184,7 +138,8 @@ const SettingClash = ({ onError }: Props) => {
         }
       >
         <GuardState
-          value={logLevel === "warn" ? "warning" : (logLevel ?? "info")}
+          // clash premium 2022.08.26 值为warn
+          value={logLevel === "warn" ? "warning" : logLevel ?? "info"}
           onCatch={onError}
           onFormat={(e: any) => e.target.value}
           onChange={(e) => onChangeData({ "log-level": e })}
@@ -200,10 +155,27 @@ const SettingClash = ({ onError }: Props) => {
         </GuardState>
       </SettingItem>
 
-      <SettingItem label={t("Port Config")}>
+      <SettingItem
+        label={t("Port Config")}
+        extra={
+          <TooltipIcon
+            title={t("Random Port")}
+            color={enable_random_port ? "primary" : "inherit"}
+            icon={ShuffleRounded}
+            onClick={() => {
+              Notice.success(
+                t("Restart Application to Apply Modifications"),
+                1000
+              );
+              onChangeVerge({ enable_random_port: !enable_random_port });
+              patchVerge({ enable_random_port: !enable_random_port });
+            }}
+          />
+        }
+      >
         <TextField
           autoComplete="new-password"
-          disabled={false}
+          disabled={enable_random_port}
           size="small"
           value={verge_mixed_port ?? 7897}
           sx={{ width: 100, input: { py: "7.5px", cursor: "pointer" } }}
@@ -216,17 +188,7 @@ const SettingClash = ({ onError }: Props) => {
 
       <SettingItem
         onClick={() => ctrlRef.current?.open()}
-        label={
-          <>
-            {t("External")}
-            <TooltipIcon
-              title={t(
-                "Enable one-click random API port and key. Click to randomize the port and key",
-              )}
-              sx={{ opacity: "0.7" }}
-            />
-          </>
-        }
+        label={t("External")}
       />
 
       <SettingItem onClick={() => webRef.current?.open()} label={t("Web UI")} />

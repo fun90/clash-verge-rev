@@ -11,13 +11,9 @@ import {
   TextField,
 } from "@mui/material";
 import { useClash } from "@/hooks/use-clash";
-import { BaseDialog, DialogRef, Switch } from "@/components/base";
+import { BaseDialog, DialogRef, Notice, Switch } from "@/components/base";
 import { StackModeSwitch } from "./stack-mode-switch";
 import { enhanceProfiles } from "@/services/cmds";
-import getSystem from "@/utils/get-system";
-import { showNotice } from "@/services/noticeService";
-
-const OS = getSystem();
 
 export const TunViewer = forwardRef<DialogRef>((props, ref) => {
   const { t } = useTranslation();
@@ -27,7 +23,7 @@ export const TunViewer = forwardRef<DialogRef>((props, ref) => {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState({
     stack: "mixed",
-    device: OS === "macos" ? "utun1024" : "Mihomo",
+    device: "Mihomo",
     autoRoute: true,
     autoDetectInterface: true,
     dnsHijack: ["any:53"],
@@ -39,8 +35,8 @@ export const TunViewer = forwardRef<DialogRef>((props, ref) => {
     open: () => {
       setOpen(true);
       setValues({
-        stack: clash?.tun.stack ?? "gvisor",
-        device: clash?.tun.device ?? (OS === "macos" ? "utun1024" : "Mihomo"),
+        stack: clash?.tun.stack ?? "mixed",
+        device: clash?.tun.device ?? "Mihomo",
         autoRoute: clash?.tun["auto-route"] ?? true,
         autoDetectInterface: clash?.tun["auto-detect-interface"] ?? true,
         dnsHijack: clash?.tun["dns-hijack"] ?? ["any:53"],
@@ -55,12 +51,7 @@ export const TunViewer = forwardRef<DialogRef>((props, ref) => {
     try {
       let tun = {
         stack: values.stack,
-        device:
-          values.device === ""
-            ? OS === "macos"
-              ? "utun1024"
-              : "Mihomo"
-            : values.device,
+        device: values.device === "" ? "Mihomo" : values.device,
         "auto-route": values.autoRoute,
         "auto-detect-interface": values.autoDetectInterface,
         "dns-hijack": values.dnsHijack[0] === "" ? [] : values.dnsHijack,
@@ -73,17 +64,17 @@ export const TunViewer = forwardRef<DialogRef>((props, ref) => {
           ...(old! || {}),
           tun,
         }),
-        false,
+        false
       );
       try {
         await enhanceProfiles();
-        showNotice("success", t("Settings Applied"));
+        Notice.success(t("Settings Applied"), 1000);
       } catch (err: any) {
-        showNotice("error", err.message || err.toString());
+        Notice.error(err.message || err.toString(), 3000);
       }
       setOpen(false);
     } catch (err: any) {
-      showNotice("error", err.message || err.toString());
+      Notice.error(err.message || err.toString());
     }
   });
 
@@ -98,8 +89,8 @@ export const TunViewer = forwardRef<DialogRef>((props, ref) => {
             size="small"
             onClick={async () => {
               let tun = {
-                stack: "gvisor",
-                device: OS === "macos" ? "utun1024" : "Mihomo",
+                stack: "mixed",
+                device: "Mihomo",
                 "auto-route": true,
                 "auto-detect-interface": true,
                 "dns-hijack": ["any:53"],
@@ -107,8 +98,8 @@ export const TunViewer = forwardRef<DialogRef>((props, ref) => {
                 mtu: 1500,
               };
               setValues({
-                stack: "gvisor",
-                device: OS === "macos" ? "utun1024" : "Mihomo",
+                stack: "mixed",
+                device: "Mihomo",
                 autoRoute: true,
                 autoDetectInterface: true,
                 dnsHijack: ["any:53"],
@@ -121,7 +112,7 @@ export const TunViewer = forwardRef<DialogRef>((props, ref) => {
                   ...(old! || {}),
                   tun,
                 }),
-                false,
+                false
               );
             }}
           >

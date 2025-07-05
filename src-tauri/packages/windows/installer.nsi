@@ -916,10 +916,6 @@ FunctionEnd
 !macroend
 
 Section Uninstall
-  ;删除 window-state.json 文件
-  SetShellVarContext current
-  Delete "$APPDATA\io.github.clash-verge-rev.clash-verge-rev\window-state.json"
-
   !insertmacro CheckIfAppIsRunning
   !insertmacro CheckAllVergeProcesses
   !insertmacro RemoveVergeService
@@ -979,23 +975,16 @@ Section Uninstall
   RMDir "$INSTDIR"
 
   !insertmacro DeleteAppUserModelId
-  !insertmacro UnpinShortcut "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
-  !insertmacro UnpinShortcut "$DESKTOP\${PRODUCTNAME}.lnk"
-  ; 兼容旧名称快捷方式
-  !insertmacro UnpinShortcut "$SMPROGRAMS\$AppStartMenuFolder\clash-verge.lnk"
-  !insertmacro UnpinShortcut "$DESKTOP\clash-verge.lnk"
+  !insertmacro UnpinShortcut "$SMPROGRAMS\$AppStartMenuFolder\${MAINBINARYNAME}.lnk"
+  !insertmacro UnpinShortcut "$DESKTOP\${MAINBINARYNAME}.lnk"
 
   ; Remove start menu shortcut
   !insertmacro MUI_STARTMENU_GETFOLDER Application $AppStartMenuFolder
-  Delete "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
-  ; 兼容旧名称快捷方式
-  Delete "$SMPROGRAMS\$AppStartMenuFolder\clash-verge.lnk"
+  Delete "$SMPROGRAMS\$AppStartMenuFolder\${MAINBINARYNAME}.lnk"
   RMDir "$SMPROGRAMS\$AppStartMenuFolder"
 
   ; Remove desktop shortcuts
-  Delete "$DESKTOP\${PRODUCTNAME}.lnk"
-  ; 兼容旧名称快捷方式
-  Delete "$DESKTOP\clash-verge.lnk"
+  Delete "$DESKTOP\${MAINBINARYNAME}.lnk"
 
   ; Remove registry information for add/remove programs
   !if "${INSTALLMODE}" == "both"
@@ -1014,10 +1003,6 @@ Section Uninstall
     RmDir /r "$APPDATA\${BUNDLEID}"
     RmDir /r "$LOCALAPPDATA\${BUNDLEID}"
   ${EndIf}
-
-  ;删除 window-state.json 文件
-  SetShellVarContext current
-  Delete "$APPDATA\io.github.clash-verge-rev.clash-verge-rev\window-state.json"
 
   ${GetOptions} $CMDLINE "/P" $R0
   IfErrors +2 0
@@ -1061,12 +1046,12 @@ FunctionEnd
 !macroend
 
 Function CreateDesktopShortcut
-  CreateShortcut "$DESKTOP\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
-  !insertmacro SetLnkAppUserModelId "$DESKTOP\${PRODUCTNAME}.lnk"
+  CreateShortcut "$DESKTOP\${MAINBINARYNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+  !insertmacro SetLnkAppUserModelId "$DESKTOP\${MAINBINARYNAME}.lnk"
 FunctionEnd
 
 Function CreateStartMenuShortcut
   CreateDirectory "$SMPROGRAMS\$AppStartMenuFolder"
-  CreateShortcut "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
-  !insertmacro SetLnkAppUserModelId "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
+  CreateShortcut "$SMPROGRAMS\$AppStartMenuFolder\${MAINBINARYNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+  !insertmacro SetLnkAppUserModelId "$SMPROGRAMS\$AppStartMenuFolder\${MAINBINARYNAME}.lnk"
 FunctionEnd

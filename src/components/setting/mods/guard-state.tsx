@@ -29,13 +29,13 @@ export function GuardState<T>(props: Props<T>) {
   const lockRef = useRef(false);
   const saveRef = useRef(value);
   const lastRef = useRef(0);
-  const timeRef = useRef<any>(undefined);
+  const timeRef = useRef<any>();
 
   if (!isValidElement(children)) {
     return children as any;
   }
 
-  const childProps = { ...(children.props as Record<string, any>) };
+  const childProps = { ...children.props };
 
   childProps[valueProps] = value;
   childProps[onChangeProps] = async (...args: any[]) => {

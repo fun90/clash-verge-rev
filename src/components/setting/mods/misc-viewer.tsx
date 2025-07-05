@@ -11,9 +11,8 @@ import {
   InputAdornment,
 } from "@mui/material";
 import { useVerge } from "@/hooks/use-verge";
-import { BaseDialog, DialogRef, Switch } from "@/components/base";
+import { BaseDialog, DialogRef, Notice, Switch } from "@/components/base";
 import { TooltipIcon } from "@/components/base/base-tooltip-icon";
-import { showNotice } from "@/services/noticeService";
 
 export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
   const { t } = useTranslation();
@@ -21,7 +20,7 @@ export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
 
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState({
-    appLogLevel: "warn",
+    appLogLevel: "info",
     autoCloseConnection: true,
     autoCheckUpdate: true,
     enableBuiltinEnhanced: true,
@@ -35,7 +34,7 @@ export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
     open: () => {
       setOpen(true);
       setValues({
-        appLogLevel: verge?.app_log_level ?? "warn",
+        appLogLevel: verge?.app_log_level ?? "info",
         autoCloseConnection: verge?.auto_close_connection ?? true,
         autoCheckUpdate: verge?.auto_check_update ?? true,
         enableBuiltinEnhanced: verge?.enable_builtin_enhanced ?? true,
@@ -62,7 +61,7 @@ export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
       });
       setOpen(false);
     } catch (err: any) {
-      showNotice("error", err.toString());
+      Notice.error(err.message || err.toString());
     }
   });
 
@@ -187,10 +186,9 @@ export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
           >
             {[
               { key: t("Never Clean"), value: 0 },
-              { key: t("Retain _n Days", { n: 1 }), value: 1 },
-              { key: t("Retain _n Days", { n: 7 }), value: 2 },
-              { key: t("Retain _n Days", { n: 30 }), value: 3 },
-              { key: t("Retain _n Days", { n: 90 }), value: 4 },
+              { key: t("Retain _n Days", { n: 7 }), value: 1 },
+              { key: t("Retain _n Days", { n: 30 }), value: 2 },
+              { key: t("Retain _n Days", { n: 90 }), value: 3 },
             ].map((i) => (
               <MenuItem key={i.value} value={i.value}>
                 {i.key}
@@ -216,7 +214,7 @@ export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
             spellCheck="false"
             sx={{ width: 250, marginLeft: "auto" }}
             value={values.defaultLatencyTest}
-            placeholder="https://cp.cloudflare.com/generate_204"
+            placeholder="http://cp.cloudflare.com/generate_204"
             onChange={(e) =>
               setValues((v) => ({ ...v, defaultLatencyTest: e.target.value }))
             }
@@ -241,12 +239,10 @@ export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
                 defaultLatencyTimeout: parseInt(e.target.value),
               }))
             }
-            slotProps={{
-              input: {
-                endAdornment: (
-                  <InputAdornment position="end">{t("millis")}</InputAdornment>
-                ),
-              },
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">{t("millis")}</InputAdornment>
+              ),
             }}
           />
         </ListItem>

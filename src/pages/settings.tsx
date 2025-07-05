@@ -1,21 +1,19 @@
-import { Box, ButtonGroup, IconButton, Grid } from "@mui/material";
+import { Box, ButtonGroup, Grid, IconButton } from "@mui/material";
 import { useLockFn } from "ahooks";
 import { useTranslation } from "react-i18next";
-import { BasePage } from "@/components/base";
+import { BasePage, Notice } from "@/components/base";
 import { GitHub, HelpOutlineRounded, Telegram } from "@mui/icons-material";
 import { openWebUrl } from "@/services/cmds";
-import SettingVergeBasic from "@/components/setting/setting-verge-basic";
-import SettingVergeAdvanced from "@/components/setting/setting-verge-advanced";
+import SettingVerge from "@/components/setting/setting-verge";
 import SettingClash from "@/components/setting/setting-clash";
 import SettingSystem from "@/components/setting/setting-system";
 import { useThemeMode } from "@/services/states";
-import { showNotice } from "@/services/noticeService";
 
 const SettingPage = () => {
   const { t } = useTranslation();
 
   const onError = (err: any) => {
-    showNotice("error", err?.message || err.toString());
+    Notice.error(err?.message || err.toString());
   };
 
   const toGithubRepo = useLockFn(() => {
@@ -66,8 +64,8 @@ const SettingPage = () => {
         </ButtonGroup>
       }
     >
-      <Grid container spacing={1.5} columns={{ xs: 6, sm: 6, md: 12 }}>
-        <Grid size={6}>
+      <Grid container spacing={{ xs: 1.5, lg: 1.5 }}>
+        <Grid item xs={12} md={6}>
           <Box
             sx={{
               borderRadius: 2,
@@ -86,23 +84,14 @@ const SettingPage = () => {
             <SettingClash onError={onError} />
           </Box>
         </Grid>
-        <Grid size={6}>
-          <Box
-            sx={{
-              borderRadius: 2,
-              marginBottom: 1.5,
-              backgroundColor: isDark ? "#282a36" : "#ffffff",
-            }}
-          >
-            <SettingVergeBasic onError={onError} />
-          </Box>
+        <Grid item xs={12} md={6}>
           <Box
             sx={{
               borderRadius: 2,
               backgroundColor: isDark ? "#282a36" : "#ffffff",
             }}
           >
-            <SettingVergeAdvanced onError={onError} />
+            <SettingVerge onError={onError} />
           </Box>
         </Grid>
       </Grid>

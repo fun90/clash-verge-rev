@@ -1,37 +1,28 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import useSWR from "swr";
+import { useState, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { Box } from "@mui/material";
+import { getRules } from "@/services/api";
 import { BaseEmpty, BasePage } from "@/components/base";
 import RuleItem from "@/components/rule/rule-item";
 import { ProviderButton } from "@/components/rule/provider-button";
 import { BaseSearchBox } from "@/components/base/base-search-box";
+import { useTheme } from "@mui/material/styles";
 import { ScrollTopButton } from "@/components/layout/scroll-top-button";
-import { useAppData } from "@/providers/app-data-provider";
-import { useVisibility } from "@/hooks/use-visibility";
 
 const RulesPage = () => {
   const { t } = useTranslation();
-  const { rules = [], refreshRules, refreshRuleProviders } = useAppData();
+  const { data = [] } = useSWR("getRules", getRules);
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
   const [match, setMatch] = useState(() => (_: string) => true);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const pageVisible = useVisibility();
 
-  // 在组件挂载时和页面获得焦点时刷新规则数据
-  useEffect(() => {
-    refreshRules();
-    refreshRuleProviders();
-
-    if (pageVisible) {
-      refreshRules();
-      refreshRuleProviders();
-    }
-  }, [refreshRules, refreshRuleProviders, pageVisible]);
-
-  const filteredRules = useMemo(() => {
-    return rules.filter((item) => match(item.payload));
-  }, [rules, match]);
+  const rules = useMemo(() => {
+    return data.filter((item) => match(item.payload));
+  }, [data, match]);
 
   const scrollToTop = () => {
     virtuosoRef.current?.scrollTo({
@@ -48,12 +39,7 @@ const RulesPage = () => {
     <BasePage
       full
       title={t("Rules")}
-      contentStyle={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "auto",
-      }}
+      contentStyle={{ height: "100%" }}
       header={
         <Box display="flex" alignItems="center" gap={1}>
           <ProviderButton />
@@ -73,27 +59,34 @@ const RulesPage = () => {
         <BaseSearchBox onSearch={(match) => setMatch(() => match)} />
       </Box>
 
-      {filteredRules.length > 0 ? (
-        <>
-          <Virtuoso
-            ref={virtuosoRef}
-            data={filteredRules}
-            style={{
-              flex: 1,
-            }}
-            itemContent={(index, item) => (
-              <RuleItem index={index + 1} value={item} />
-            )}
-            followOutput={"smooth"}
-            scrollerRef={(ref) => {
-              if (ref) ref.addEventListener("scroll", handleScroll);
-            }}
-          />
-          <ScrollTopButton onClick={scrollToTop} show={showScrollTop} />
-        </>
-      ) : (
-        <BaseEmpty />
-      )}
+      <Box
+        height="calc(100% - 65px)"
+        sx={{
+          margin: "10px",
+          borderRadius: "8px",
+          bgcolor: isDark ? "#282a36" : "#ffffff",
+          position: "relative",
+        }}
+      >
+        {rules.length > 0 ? (
+          <>
+            <Virtuoso
+              ref={virtuosoRef}
+              data={rules}
+              itemContent={(index, item) => (
+                <RuleItem index={index + 1} value={item} />
+              )}
+              followOutput={"smooth"}
+              scrollerRef={(ref) => {
+                if (ref) ref.addEventListener("scroll", handleScroll);
+              }}
+            />
+            <ScrollTopButton onClick={scrollToTop} show={showScrollTop} />
+          </>
+        ) : (
+          <BaseEmpty />
+        )}
+      </Box>
     </BasePage>
   );
 };

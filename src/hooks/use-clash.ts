@@ -10,12 +10,12 @@ import {
 export const useClash = () => {
   const { data: clash, mutate: mutateClash } = useSWR(
     "getRuntimeConfig",
-    getRuntimeConfig,
+    getRuntimeConfig
   );
 
   const { data: versionData, mutate: mutateVersion } = useSWR(
     "getVersion",
-    getVersion,
+    getVersion
   );
 
   const patchClash = useLockFn(async (patch: Partial<IConfigData>) => {
@@ -26,8 +26,8 @@ export const useClash = () => {
   const version = versionData?.premium
     ? `${versionData.version} Premium`
     : versionData?.meta
-      ? `${versionData.version} Mihomo`
-      : versionData?.version || "-";
+    ? `${versionData.version} Mihomo`
+    : versionData?.version || "-";
 
   return {
     clash,
@@ -41,7 +41,7 @@ export const useClash = () => {
 export const useClashInfo = () => {
   const { data: clashInfo, mutate: mutateInfo } = useSWR(
     "getClashInfo",
-    getClashInfo,
+    getClashInfo
   );
 
   const patchInfo = async (
@@ -56,7 +56,7 @@ export const useClashInfo = () => {
         | "external-controller"
         | "secret"
       >
-    >,
+    >
   ) => {
     const hasInfo =
       patch["redir-port"] != null ||
@@ -71,8 +71,8 @@ export const useClashInfo = () => {
 
     if (patch["redir-port"]) {
       const port = patch["redir-port"];
-      if (port < 1111) {
-        throw new Error("The port should not < 1111");
+      if (port < 1000) {
+        throw new Error("The port should not < 1000");
       }
       if (port > 65536) {
         throw new Error("The port should not > 65536");
@@ -81,8 +81,8 @@ export const useClashInfo = () => {
 
     if (patch["tproxy-port"]) {
       const port = patch["tproxy-port"];
-      if (port < 1111) {
-        throw new Error("The port should not < 1111");
+      if (port < 1000) {
+        throw new Error("The port should not < 1000");
       }
       if (port > 65536) {
         throw new Error("The port should not > 65536");
@@ -91,8 +91,8 @@ export const useClashInfo = () => {
 
     if (patch["mixed-port"]) {
       const port = patch["mixed-port"];
-      if (port < 1111) {
-        throw new Error("The port should not < 1111");
+      if (port < 1000) {
+        throw new Error("The port should not < 1000");
       }
       if (port > 65536) {
         throw new Error("The port should not > 65536");
@@ -101,8 +101,8 @@ export const useClashInfo = () => {
 
     if (patch["socks-port"]) {
       const port = patch["socks-port"];
-      if (port < 1111) {
-        throw new Error("The port should not < 1111");
+      if (port < 1000) {
+        throw new Error("The port should not < 1000");
       }
       if (port > 65536) {
         throw new Error("The port should not > 65536");
@@ -111,8 +111,8 @@ export const useClashInfo = () => {
 
     if (patch["port"]) {
       const port = patch["port"];
-      if (port < 1111) {
-        throw new Error("The port should not < 1111");
+      if (port < 1000) {
+        throw new Error("The port should not < 1000");
       }
       if (port > 65536) {
         throw new Error("The port should not > 65536");

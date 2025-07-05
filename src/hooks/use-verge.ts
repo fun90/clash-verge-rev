@@ -7,7 +7,7 @@ export const useVerge = () => {
     async () => {
       const config = await getVergeConfig();
       return config;
-    },
+    }
   );
 
   const patchVerge = async (value: Partial<IVergeConfig>) => {

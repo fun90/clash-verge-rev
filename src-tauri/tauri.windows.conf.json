@@ -21,13 +21,11 @@
     }
   },
   "app": {
-    "windows": [],
-    "security": {
-      "capabilities": [
-        "desktop-capability",
-        "desktop-windows-capability",
-        "migrated"
-      ]
-    }
+    "trayIcon": {
+      "iconPath": "icons/tray-icon.ico",
+      "iconAsTemplate": true,
+      "menuOnLeftClick": false
+    },
+    "windows": []
   }
 }

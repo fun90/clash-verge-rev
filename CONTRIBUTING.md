@@ -34,29 +34,21 @@ npm install pnpm -g
 
 ### Install Dependencies
 
-Install node packages
-
 ```shell
 pnpm install
 ```
 
-Install apt packages ONLY for Ubuntu
-
-```shell
-apt-get install -y libxslt1.1 libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
-```
-
-### Download the Mihomo Core Binary
+### Download the Clash Mihomo Core Binary
 
 You have two options for downloading the clash binary:
 
 - Automatically download it via the provided script:
   ```shell
-  pnpm run prebuild
+  pnpm run check
   # Use '--force' to force update to the latest version
-  # pnpm run prebuild --force
+  # pnpm run check --force
   ```
-- Manually download it from the [Mihomo release](https://github.com/MetaCubeX/mihomo/releases). After downloading, rename the binary according to the [Tauri configuration](https://tauri.app/v1/api/config#bundleconfig.externalbin).
+- Manually download it from the [Clash Meta release](https://github.com/MetaCubeX/Clash.Meta/releases). After downloading, rename the binary according to the [Tauri configuration](https://tauri.app/v1/api/config#bundleconfig.externalbin).
 
 ### Run the Development Server
 
@@ -73,59 +65,12 @@ pnpm dev:diff
 To build this project:
 
 ```shell
-pnpm build
+pnpm run build
 ```
-
-For a faster build, use the following command
-
-```shell
-pnpm build:fast
-```
-
-This uses Rust's fast-release profile which significantly reduces compilation time by disabling optimization and LTO. The resulting binary will be larger and less performant than the standard build, but it's useful for testing changes quickly.
 
 The `Artifacts` will display in the `log` in the Terminal.
 
-### Build clean
-
-To clean rust build:
-
-```shell
-pnpm clean
-```
-
-### Portable Version (Windows Only)
-
-To package portable version after the build:
-
-```shell
-pnpm portable
-```
-
 ## Contributing Your Changes
-
-#### Before commit your changes
-
-If you changed the rust code, it's recommanded to execute code style formatting and quailty checks.
-
-1. Code quailty checks
-
-```bash
-# For rust backend
-$ clash-verge-rev: pnpm clippy
-# For frontend (not yet).
-```
-
-2. Code style formatting
-
-```bash
-# For rust backend
-$ clash-verge-rev: cd src-tauri
-$ clash-verge-rev/src-tauri: cargo fmt
-# For frontend
-$ clash-verge-rev: pnpm format:check
-$ clash-verge-rev: pnpm format
-```
 
 Once you have made your changes:
 

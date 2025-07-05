@@ -1,8 +1,7 @@
-use crate::{
-    config::{deserialize_encrypted, serialize_encrypted, DEFAULT_PAC},
-    logging,
-    utils::{dirs, help, i18n, logging::Type},
-};
+use crate::config::DEFAULT_PAC;
+use crate::config::{deserialize_encrypted, serialize_encrypted};
+use crate::utils::i18n;
+use crate::utils::{dirs, help};
 use anyhow::Result;
 use log::LevelFilter;
 use serde::{Deserialize, Serialize};
@@ -71,9 +70,6 @@ pub struct IVerge {
     /// enable proxy guard
     pub enable_proxy_guard: Option<bool>,
 
-    /// enable dns settings - this controls whether dns_config.yaml is applied
-    pub enable_dns_settings: Option<bool>,
-
     /// always use default bypass
     pub use_default_bypass: Option<bool>,
 
@@ -89,9 +85,6 @@ pub struct IVerge {
     /// pac script content
     pub pac_file_content: Option<String>,
 
-    /// proxy host address
-    pub proxy_host: Option<String>,
-
     /// theme setting
     pub theme_setting: Option<IVergeTheme>,
 
@@ -105,13 +98,6 @@ pub struct IVerge {
     /// hotkey map
     /// format: {func},{key}
     pub hotkeys: Option<Vec<String>>,
-
-    /// enable global hotkey
-    pub enable_global_hotkey: Option<bool>,
-
-    /// 首页卡片设置
-    /// 控制首页各个卡片的显示和隐藏
-    pub home_cards: Option<serde_json::Value>,
 
     /// 切换代理时自动关闭连接
     pub auto_close_connection: Option<bool>,
@@ -135,7 +121,7 @@ pub struct IVerge {
     pub test_list: Option<Vec<IVergeTestItem>>,
 
     /// 日志清理
-    /// 0: 不清理; 1: 1天；2: 7天; 3: 30天; 4: 90天
+    /// 0: 不清理; 1: 7天; 2: 30天; 3: 90天
     pub auto_log_clean: Option<i32>,
 
     /// 是否启用随机端口
@@ -192,20 +178,6 @@ pub struct IVerge {
     pub webdav_password: Option<String>,
 
     pub enable_tray_speed: Option<bool>,
-
-    pub enable_tray_icon: Option<bool>,
-
-    /// 自动进入轻量模式
-    pub enable_auto_light_weight_mode: Option<bool>,
-
-    /// 自动进入轻量模式的延迟（分钟）
-    pub auto_light_weight_minutes: Option<u64>,
-
-    /// 启用代理页面自动滚动
-    pub enable_hover_jump_navigator: Option<bool>,
-
-    /// 服务状态跟踪
-    pub service_state: Option<crate::core::service::ServiceState>,
 }
 
 #[derive(Default, Debug, Clone, Deserialize, Serialize)]
@@ -233,93 +205,6 @@ pub struct IVergeTheme {
 }
 
 impl IVerge {
-    /// 有效的clash核心名称
-    pub const VALID_CLASH_CORES: &'static [&'static str] = &["verge-mihomo", "verge-mihomo-alpha"];
-
-    /// 验证并修正配置文件中的clash_core值
-    pub fn validate_and_fix_config() -> Result<()> {
-        let config_path = dirs::verge_path()?;
-        let mut config = match help::read_yaml::<IVerge>(&config_path) {
-            Ok(config) => config,
-            Err(_) => Self::template(),
-        };
-
-        let mut needs_fix = false;
-
-        if let Some(ref core) = config.clash_core {
-            let core_str = core.trim();
-            if core_str.is_empty() || !Self::VALID_CLASH_CORES.contains(&core_str) {
-                logging!(
-                    warn,
-                    Type::Config,
-                    true,
-                    "启动时发现无效的clash_core配置: '{}', 将自动修正为 'verge-mihomo'",
-                    core
-                );
-                config.clash_core = Some("verge-mihomo".to_string());
-                needs_fix = true;
-            }
-        } else {
-            logging!(
-                info,
-                Type::Config,
-                true,
-                "启动时发现未配置clash_core, 将设置为默认值 'verge-mihomo'"
-            );
-            config.clash_core = Some("verge-mihomo".to_string());
-            needs_fix = true;
-        }
-
-        // 修正后保存配置
-        if needs_fix {
-            logging!(info, Type::Config, true, "正在保存修正后的配置文件...");
-            help::save_yaml(&config_path, &config, Some("# Clash Verge Config"))?;
-            logging!(
-                info,
-                Type::Config,
-                true,
-                "配置文件修正完成，需要重新加载配置"
-            );
-
-            Self::reload_config_after_fix(config)?;
-        } else {
-            logging!(
-                info,
-                Type::Config,
-                true,
-                "clash_core配置验证通过: {:?}",
-                config.clash_core
-            );
-        }
-
-        Ok(())
-    }
-
-    /// 配置修正后重新加载配置
-    fn reload_config_after_fix(updated_config: IVerge) -> Result<()> {
-        use crate::config::Config;
-
-        let config_draft = Config::verge();
-        *config_draft.draft() = Box::new(updated_config.clone());
-        config_draft.apply();
-
-        logging!(
-            info,
-            Type::Config,
-            true,
-            "内存配置已强制更新，新的clash_core: {:?}",
-            updated_config.clash_core
-        );
-
-        Ok(())
-    }
-
-    pub fn get_valid_clash_core(&self) -> String {
-        self.clash_core
-            .clone()
-            .unwrap_or_else(|| "verge-mihomo".to_string())
-    }
-
     fn get_system_language() -> String {
         let sys_lang = sys_locale::get_locale()
             .unwrap_or_else(|| String::from("en"))
@@ -354,7 +239,7 @@ impl IVerge {
             env_type: Some("bash".into()),
             #[cfg(target_os = "windows")]
             env_type: Some("powershell".into()),
-            start_page: Some("/home".into()),
+            start_page: Some("/".into()),
             traffic_graph: Some(true),
             enable_memory_usage: Some(true),
             enable_group_icon: Some(true),
@@ -366,11 +251,9 @@ impl IVerge {
             tun_tray_icon: Some(false),
             enable_auto_launch: Some(false),
             enable_silent_start: Some(false),
-            enable_hover_jump_navigator: Some(true),
             enable_system_proxy: Some(false),
             proxy_auto_config: Some(false),
             pac_file_content: Some(DEFAULT_PAC.into()),
-            proxy_host: Some("127.0.0.1".into()),
             enable_random_port: Some(false),
             #[cfg(not(target_os = "windows"))]
             verge_redir_port: Some(7895),
@@ -395,14 +278,7 @@ impl IVerge {
             webdav_url: None,
             webdav_username: None,
             webdav_password: None,
-            enable_tray_speed: Some(false),
-            enable_tray_icon: Some(true),
-            enable_global_hotkey: Some(true),
-            enable_auto_light_weight_mode: Some(false),
-            auto_light_weight_minutes: Some(10),
-            enable_dns_settings: Some(false),
-            home_cards: None,
-            service_state: None,
+            enable_tray_speed: Some(true),
             ..Self::default()
         }
     }
@@ -443,7 +319,6 @@ impl IVerge {
         patch!(enable_tun_mode);
         patch!(enable_auto_launch);
         patch!(enable_silent_start);
-        patch!(enable_hover_jump_navigator);
         patch!(enable_random_port);
         #[cfg(not(target_os = "windows"))]
         patch!(verge_redir_port);
@@ -465,12 +340,11 @@ impl IVerge {
         patch!(proxy_guard_duration);
         patch!(proxy_auto_config);
         patch!(pac_file_content);
-        patch!(proxy_host);
+
         patch!(theme_setting);
         patch!(web_ui_list);
         patch!(clash_core);
         patch!(hotkeys);
-        patch!(enable_global_hotkey);
 
         patch!(auto_close_connection);
         patch!(auto_check_update);
@@ -485,12 +359,6 @@ impl IVerge {
         patch!(webdav_username);
         patch!(webdav_password);
         patch!(enable_tray_speed);
-        patch!(enable_tray_icon);
-        patch!(enable_auto_light_weight_mode);
-        patch!(auto_light_weight_minutes);
-        patch!(enable_dns_settings);
-        patch!(home_cards);
-        patch!(service_state);
     }
 
     /// 在初始化前尝试拿到单例端口的值
@@ -543,13 +411,11 @@ pub struct IVergeResponse {
     pub enable_silent_start: Option<bool>,
     pub enable_system_proxy: Option<bool>,
     pub enable_proxy_guard: Option<bool>,
-    pub enable_global_hotkey: Option<bool>,
     pub use_default_bypass: Option<bool>,
     pub system_proxy_bypass: Option<String>,
     pub proxy_guard_duration: Option<u64>,
     pub proxy_auto_config: Option<bool>,
     pub pac_file_content: Option<String>,
-    pub proxy_host: Option<String>,
     pub theme_setting: Option<IVergeTheme>,
     pub web_ui_list: Option<Vec<String>>,
     pub clash_core: Option<String>,
@@ -580,19 +446,10 @@ pub struct IVergeResponse {
     pub webdav_username: Option<String>,
     pub webdav_password: Option<String>,
     pub enable_tray_speed: Option<bool>,
-    pub enable_tray_icon: Option<bool>,
-    pub enable_auto_light_weight_mode: Option<bool>,
-    pub auto_light_weight_minutes: Option<u64>,
-    pub enable_dns_settings: Option<bool>,
-    pub home_cards: Option<serde_json::Value>,
-    pub enable_hover_jump_navigator: Option<bool>,
-    pub service_state: Option<crate::core::service::ServiceState>,
 }
 
 impl From<IVerge> for IVergeResponse {
     fn from(verge: IVerge) -> Self {
-        // 先获取验证后的clash_core值，避免后续借用冲突
-        let valid_clash_core = verge.get_valid_clash_core();
         Self {
             app_log_level: verge.app_log_level,
             language: verge.language,
@@ -615,16 +472,14 @@ impl From<IVerge> for IVergeResponse {
             enable_silent_start: verge.enable_silent_start,
             enable_system_proxy: verge.enable_system_proxy,
             enable_proxy_guard: verge.enable_proxy_guard,
-            enable_global_hotkey: verge.enable_global_hotkey,
             use_default_bypass: verge.use_default_bypass,
             system_proxy_bypass: verge.system_proxy_bypass,
             proxy_guard_duration: verge.proxy_guard_duration,
             proxy_auto_config: verge.proxy_auto_config,
             pac_file_content: verge.pac_file_content,
-            proxy_host: verge.proxy_host,
             theme_setting: verge.theme_setting,
             web_ui_list: verge.web_ui_list,
-            clash_core: Some(valid_clash_core),
+            clash_core: verge.clash_core,
             hotkeys: verge.hotkeys,
             auto_close_connection: verge.auto_close_connection,
             auto_check_update: verge.auto_check_update,
@@ -652,13 +507,6 @@ impl From<IVerge> for IVergeResponse {
             webdav_username: verge.webdav_username,
             webdav_password: verge.webdav_password,
             enable_tray_speed: verge.enable_tray_speed,
-            enable_tray_icon: verge.enable_tray_icon,
-            enable_auto_light_weight_mode: verge.enable_auto_light_weight_mode,
-            auto_light_weight_minutes: verge.auto_light_weight_minutes,
-            enable_dns_settings: verge.enable_dns_settings,
-            home_cards: verge.home_cards,
-            enable_hover_jump_navigator: verge.enable_hover_jump_navigator,
-            service_state: verge.service_state,
         }
     }
 }

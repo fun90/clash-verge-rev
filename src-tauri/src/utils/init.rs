@@ -1,21 +1,16 @@
-use crate::{
-    config::*,
-    core::handle,
-    utils::{dirs, help},
-};
+use crate::config::*;
+use crate::core::handle;
+use crate::utils::{dirs, help};
 use anyhow::Result;
 use chrono::{Local, TimeZone};
 use log::LevelFilter;
-use log4rs::{
-    append::{console::ConsoleAppender, file::FileAppender},
-    config::{Appender, Logger, Root},
-    encode::pattern::PatternEncoder,
-};
-use std::{
-    fs::{self, DirEntry},
-    path::PathBuf,
-    str::FromStr,
-};
+use log4rs::append::console::ConsoleAppender;
+use log4rs::append::file::FileAppender;
+use log4rs::config::{Appender, Logger, Root};
+use log4rs::encode::pattern::PatternEncoder;
+use std::fs::{self, DirEntry};
+use std::path::PathBuf;
+use std::str::FromStr;
 use tauri_plugin_shell::ShellExt;
 
 /// initialize this instance's log file
@@ -138,121 +133,6 @@ pub fn delete_log() -> Result<()> {
     Ok(())
 }
 
-/// 初始化DNS配置文件
-fn init_dns_config() -> Result<()> {
-    use serde_yaml::Value;
-
-    // 创建DNS子配置
-    let dns_config = serde_yaml::Mapping::from_iter([
-        ("enable".into(), Value::Bool(true)),
-        ("listen".into(), Value::String(":53".into())),
-        ("enhanced-mode".into(), Value::String("fake-ip".into())),
-        (
-            "fake-ip-range".into(),
-            Value::String("198.18.0.1/16".into()),
-        ),
-        (
-            "fake-ip-filter-mode".into(),
-            Value::String("blacklist".into()),
-        ),
-        ("prefer-h3".into(), Value::Bool(false)),
-        ("respect-rules".into(), Value::Bool(false)),
-        ("use-hosts".into(), Value::Bool(false)),
-        ("use-system-hosts".into(), Value::Bool(false)),
-        (
-            "fake-ip-filter".into(),
-            Value::Sequence(vec![
-                Value::String("*.lan".into()),
-                Value::String("*.local".into()),
-                Value::String("*.arpa".into()),
-                Value::String("time.*.com".into()),
-                Value::String("ntp.*.com".into()),
-                Value::String("time.*.com".into()),
-                Value::String("+.market.xiaomi.com".into()),
-                Value::String("localhost.ptlogin2.qq.com".into()),
-                Value::String("*.msftncsi.com".into()),
-                Value::String("www.msftconnecttest.com".into()),
-            ]),
-        ),
-        (
-            "default-nameserver".into(),
-            Value::Sequence(vec![
-                Value::String("system".into()),
-                Value::String("223.6.6.6".into()),
-                Value::String("8.8.8.8".into()),
-                Value::String("2400:3200::1".into()),
-                Value::String("2001:4860:4860::8888".into()),
-            ]),
-        ),
-        (
-            "nameserver".into(),
-            Value::Sequence(vec![
-                Value::String("8.8.8.8".into()),
-                Value::String("https://doh.pub/dns-query".into()),
-                Value::String("https://dns.alidns.com/dns-query".into()),
-            ]),
-        ),
-        ("fallback".into(), Value::Sequence(vec![])),
-        (
-            "nameserver-policy".into(),
-            Value::Mapping(serde_yaml::Mapping::new()),
-        ),
-        (
-            "proxy-server-nameserver".into(),
-            Value::Sequence(vec![
-                Value::String("https://doh.pub/dns-query".into()),
-                Value::String("https://dns.alidns.com/dns-query".into()),
-                Value::String("tls://223.5.5.5".into()),
-            ]),
-        ),
-        ("direct-nameserver".into(), Value::Sequence(vec![])),
-        ("direct-nameserver-follow-policy".into(), Value::Bool(false)),
-        (
-            "fallback-filter".into(),
-            Value::Mapping(serde_yaml::Mapping::from_iter([
-                ("geoip".into(), Value::Bool(true)),
-                ("geoip-code".into(), Value::String("CN".into())),
-                (
-                    "ipcidr".into(),
-                    Value::Sequence(vec![
-                        Value::String("240.0.0.0/4".into()),
-                        Value::String("0.0.0.0/32".into()),
-                    ]),
-                ),
-                (
-                    "domain".into(),
-                    Value::Sequence(vec![
-                        Value::String("+.google.com".into()),
-                        Value::String("+.facebook.com".into()),
-                        Value::String("+.youtube.com".into()),
-                    ]),
-                ),
-            ])),
-        ),
-    ]);
-
-    // 获取默认DNS和host配置
-    let default_dns_config = serde_yaml::Mapping::from_iter([
-        ("dns".into(), Value::Mapping(dns_config)),
-        ("hosts".into(), Value::Mapping(serde_yaml::Mapping::new())),
-    ]);
-
-    // 检查DNS配置文件是否存在
-    let app_dir = dirs::app_home_dir()?;
-    let dns_path = app_dir.join("dns_config.yaml");
-
-    if !dns_path.exists() {
-        log::info!(target: "app", "Creating default DNS config file");
-        help::save_yaml(
-            &dns_path,
-            &default_dns_config,
-            Some("# Clash Verge DNS Config"),
-        )?;
-    }
-
-    Ok(())
-}
-
 /// Initialize all the config files
 /// before tauri setup
 pub fn init_config() -> Result<()> {
@@ -286,18 +166,12 @@ pub fn init_config() -> Result<()> {
         <Result<()>>::Ok(())
     }));
 
-    // 验证并修正verge.yaml中的clash_core配置
-    crate::log_err!(IVerge::validate_and_fix_config());
-
     crate::log_err!(dirs::profiles_path().map(|path| {
         if !path.exists() {
             help::save_yaml(&path, &IProfiles::template(), Some("# Clash Verge"))?;
         }
         <Result<()>>::Ok(())
     }));
-
-    // 初始化DNS配置文件
-    let _ = init_dns_config();
 
     Ok(())
 }
@@ -306,10 +180,14 @@ pub fn init_config() -> Result<()> {
 /// after tauri setup
 pub fn init_resources() -> Result<()> {
     let app_dir = dirs::app_home_dir()?;
+    let test_dir = app_dir.join("test");
     let res_dir = dirs::app_resources_dir()?;
 
     if !app_dir.exists() {
         let _ = fs::create_dir_all(&app_dir);
+    }
+    if !test_dir.exists() {
+        let _ = fs::create_dir_all(&test_dir);
     }
     if !res_dir.exists() {
         let _ = fs::create_dir_all(&res_dir);
@@ -322,6 +200,7 @@ pub fn init_resources() -> Result<()> {
     for file in file_list.iter() {
         let src_path = res_dir.join(file);
         let dest_path = app_dir.join(file);
+        let test_dest_path = test_dir.join(file);
         log::debug!(target: "app", "src_path: {src_path:?}, dest_path: {dest_path:?}");
 
         let handle_copy = |dest: &PathBuf| {
@@ -333,6 +212,9 @@ pub fn init_resources() -> Result<()> {
             };
         };
 
+        if src_path.exists() && !test_dest_path.exists() {
+            handle_copy(&test_dest_path);
+        }
         if src_path.exists() && !dest_path.exists() {
             handle_copy(&dest_path);
             continue;
@@ -363,7 +245,8 @@ pub fn init_resources() -> Result<()> {
 #[cfg(target_os = "windows")]
 pub fn init_scheme() -> Result<()> {
     use tauri::utils::platform::current_exe;
-    use winreg::{enums::*, RegKey};
+    use winreg::enums::*;
+    use winreg::RegKey;
 
     let app_exe = current_exe()?;
     let app_exe = dunce::canonicalize(app_exe)?;

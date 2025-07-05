@@ -1,16 +1,12 @@
-import { useMemo, useRef, useState, useCallback } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useLockFn } from "ahooks";
 import { Box, Button, IconButton, MenuItem } from "@mui/material";
 import { Virtuoso } from "react-virtuoso";
 import { useTranslation } from "react-i18next";
-import {
-  TableChartRounded,
-  TableRowsRounded,
-  PlayCircleOutlineRounded,
-  PauseCircleOutlineRounded,
-} from "@mui/icons-material";
+import { TableChartRounded, TableRowsRounded } from "@mui/icons-material";
 import { closeAllConnections } from "@/services/api";
 import { useConnectionSetting } from "@/services/states";
+import { useClashInfo } from "@/hooks/use-clash";
 import { BaseEmpty, BasePage } from "@/components/base";
 import { ConnectionItem } from "@/components/connection/connection-item";
 import { ConnectionTable } from "@/components/connection/connection-table";
@@ -19,14 +15,12 @@ import {
   ConnectionDetailRef,
 } from "@/components/connection/connection-detail";
 import parseTraffic from "@/utils/parse-traffic";
-import {
-  BaseSearchBox,
-  type SearchState,
-} from "@/components/base/base-search-box";
+import { BaseSearchBox } from "@/components/base/base-search-box";
 import { BaseStyledSelect } from "@/components/base/base-styled-select";
+import useSWRSubscription from "swr/subscription";
+import { createSockette } from "@/utils/websocket";
 import { useTheme } from "@mui/material/styles";
 import { useVisibility } from "@/hooks/use-visibility";
-import { useAppData } from "@/providers/app-data-provider";
 
 const initConn: IConnections = {
   uploadTotal: 0,
@@ -38,14 +32,12 @@ type OrderFunc = (list: IConnectionsItem[]) => IConnectionsItem[];
 
 const ConnectionsPage = () => {
   const { t } = useTranslation();
+  const { clashInfo } = useClashInfo();
   const pageVisible = useVisibility();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const [match, setMatch] = useState(() => (_: string) => true);
   const [curOrderOpt, setOrderOpt] = useState("Default");
-
-  // 使用全局数据
-  const { connections } = useAppData();
 
   const [setting, setSetting] = useConnectionSetting();
 
@@ -56,92 +48,105 @@ const ConnectionsPage = () => {
       list.sort(
         (a, b) =>
           new Date(b.start || "0").getTime()! -
-          new Date(a.start || "0").getTime()!,
+          new Date(a.start || "0").getTime()!
       ),
     "Upload Speed": (list) => list.sort((a, b) => b.curUpload! - a.curUpload!),
     "Download Speed": (list) =>
       list.sort((a, b) => b.curDownload! - a.curDownload!),
   };
 
-  const [isPaused, setIsPaused] = useState(false);
-  const [frozenData, setFrozenData] = useState<IConnections | null>(null);
+  const { data: connData = initConn } = useSWRSubscription<
+    IConnections,
+    any,
+    "getClashConnections" | null
+  >(
+    clashInfo && pageVisible ? "getClashConnections" : null,
+    (_key, { next }) => {
+      const { server = "", secret = "" } = clashInfo!;
+      const s = createSockette(
+        `ws://${server}/connections?token=${encodeURIComponent(secret)}`,
+        {
+          onmessage(event) {
+            // meta v1.15.0 出现 data.connections 为 null 的情况
+            const data = JSON.parse(event.data) as IConnections;
+            // 尽量与前一次 connections 的展示顺序保持一致
+            next(null, (old = initConn) => {
+              const oldConn = old.connections;
+              const maxLen = data.connections?.length;
 
-  // 使用全局连接数据
-  const displayData = useMemo(() => {
-    if (!pageVisible) return initConn;
+              const connections: IConnectionsItem[] = [];
 
-    if (isPaused) {
-      return (
-        frozenData ?? {
-          uploadTotal: connections.uploadTotal,
-          downloadTotal: connections.downloadTotal,
-          connections: connections.data,
-        }
+              const rest = (data.connections || []).filter((each) => {
+                const index = oldConn.findIndex((o) => o.id === each.id);
+
+                if (index >= 0 && index < maxLen) {
+                  const old = oldConn[index];
+                  each.curUpload = each.upload - old.upload;
+                  each.curDownload = each.download - old.download;
+
+                  connections[index] = each;
+                  return false;
+                }
+                return true;
+              });
+
+              for (let i = 0; i < maxLen; ++i) {
+                if (!connections[i] && rest.length > 0) {
+                  connections[i] = rest.shift()!;
+                  connections[i].curUpload = 0;
+                  connections[i].curDownload = 0;
+                }
+              }
+
+              return { ...data, connections };
+            });
+          },
+          onerror(event) {
+            next(event);
+          },
+        },
+        3
       );
+
+      return () => {
+        s.close();
+      };
     }
+  );
 
-    return {
-      uploadTotal: connections.uploadTotal,
-      downloadTotal: connections.downloadTotal,
-      connections: connections.data,
-    };
-  }, [isPaused, frozenData, connections, pageVisible]);
-
-  const [filterConn] = useMemo(() => {
+  const [filterConn, download, upload] = useMemo(() => {
     const orderFunc = orderOpts[curOrderOpt];
-    let conns = displayData.connections.filter((conn) => {
-      const { host, destinationIP, process } = conn.metadata;
-      return (
-        match(host || "") || match(destinationIP || "") || match(process || "")
-      );
+    let connections = connData.connections.filter((conn) =>
+      match(conn.metadata.host || conn.metadata.destinationIP || "")
+    );
+
+    if (orderFunc) connections = orderFunc(connections);
+
+    let download = 0;
+    let upload = 0;
+    connections.forEach((x) => {
+      download += x.download;
+      upload += x.upload;
     });
-
-    if (orderFunc) conns = orderFunc(conns);
-
-    return [conns];
-  }, [displayData, match, curOrderOpt]);
+    return [connections, download, upload];
+  }, [connData, match, curOrderOpt]);
 
   const onCloseAll = useLockFn(closeAllConnections);
 
   const detailRef = useRef<ConnectionDetailRef>(null!);
 
-  const handleSearch = useCallback((match: (content: string) => boolean) => {
-    setMatch(() => match);
-  }, []);
-
-  const handlePauseToggle = useCallback(() => {
-    setIsPaused((prev) => {
-      if (!prev) {
-        setFrozenData({
-          uploadTotal: connections.uploadTotal,
-          downloadTotal: connections.downloadTotal,
-          connections: connections.data,
-        });
-      } else {
-        setFrozenData(null);
-      }
-      return !prev;
-    });
-  }, [connections]);
-
   return (
     <BasePage
       full
       title={<span style={{ whiteSpace: "nowrap" }}>{t("Connections")}</span>}
-      contentStyle={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "auto",
-        borderRadius: "8px",
-      }}
+      contentStyle={{ height: "100%" }}
       header={
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Box sx={{ mx: 1 }}>
-            {t("Downloaded")}: {parseTraffic(displayData.downloadTotal)}
+            {t("Downloaded")}: {parseTraffic(download)}
           </Box>
           <Box sx={{ mx: 1 }}>
-            {t("Uploaded")}: {parseTraffic(displayData.uploadTotal)}
+            {t("Uploaded")}: {parseTraffic(upload)}
           </Box>
           <IconButton
             color="inherit"
@@ -150,28 +155,21 @@ const ConnectionsPage = () => {
               setSetting((o) =>
                 o?.layout !== "table"
                   ? { ...o, layout: "table" }
-                  : { ...o, layout: "list" },
+                  : { ...o, layout: "list" }
               )
             }
           >
             {isTableLayout ? (
-              <TableRowsRounded titleAccess={t("List View")} />
+              <span title={t("List View")}>
+                <TableRowsRounded fontSize="inherit" />
+              </span>
             ) : (
-              <TableChartRounded titleAccess={t("Table View")} />
+              <span title={t("Table View")}>
+                <TableChartRounded fontSize="inherit" />
+              </span>
             )}
           </IconButton>
-          <IconButton
-            color="inherit"
-            size="small"
-            onClick={handlePauseToggle}
-            title={isPaused ? t("Resume") : t("Pause")}
-          >
-            {isPaused ? (
-              <PlayCircleOutlineRounded />
-            ) : (
-              <PauseCircleOutlineRounded />
-            )}
-          </IconButton>
+
           <Button size="small" variant="contained" onClick={onCloseAll}>
             <span style={{ whiteSpace: "nowrap" }}>{t("Close All")}</span>
           </Button>
@@ -187,9 +185,6 @@ const ConnectionsPage = () => {
           display: "flex",
           alignItems: "center",
           userSelect: "text",
-          position: "sticky",
-          top: 0,
-          zIndex: 2,
         }}
       >
         {!isTableLayout && (
@@ -204,31 +199,37 @@ const ConnectionsPage = () => {
             ))}
           </BaseStyledSelect>
         )}
-        <BaseSearchBox onSearch={handleSearch} />
+        <BaseSearchBox onSearch={(match) => setMatch(() => match)} />
       </Box>
 
-      {filterConn.length === 0 ? (
-        <BaseEmpty />
-      ) : isTableLayout ? (
-        <ConnectionTable
-          connections={filterConn}
-          onShowDetail={(detail) => detailRef.current?.open(detail)}
-        />
-      ) : (
-        <Virtuoso
-          style={{
-            flex: 1,
-            borderRadius: "8px",
-          }}
-          data={filterConn}
-          itemContent={(_, item) => (
-            <ConnectionItem
-              value={item}
-              onShowDetail={() => detailRef.current?.open(item)}
-            />
-          )}
-        />
-      )}
+      <Box
+        height="calc(100% - 65px)"
+        sx={{
+          userSelect: "text",
+          margin: "10px",
+          borderRadius: "8px",
+          bgcolor: isDark ? "#282a36" : "#ffffff",
+        }}
+      >
+        {filterConn.length === 0 ? (
+          <BaseEmpty />
+        ) : isTableLayout ? (
+          <ConnectionTable
+            connections={filterConn}
+            onShowDetail={(detail) => detailRef.current?.open(detail)}
+          />
+        ) : (
+          <Virtuoso
+            data={filterConn}
+            itemContent={(_, item) => (
+              <ConnectionItem
+                value={item}
+                onShowDetail={() => detailRef.current?.open(item)}
+              />
+            )}
+          />
+        )}
+      </Box>
       <ConnectionDetail ref={detailRef} />
     </BasePage>
   );

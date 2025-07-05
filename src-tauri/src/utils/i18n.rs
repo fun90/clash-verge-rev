@@ -1,4 +1,5 @@
-use crate::{config::Config, utils::dirs};
+use crate::config::Config;
+use crate::utils::dirs;
 use once_cell::sync::Lazy;
 use serde_json::Value;
 use std::{collections::HashMap, fs, path::PathBuf};

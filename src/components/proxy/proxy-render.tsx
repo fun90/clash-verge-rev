@@ -5,8 +5,6 @@ import {
   ListItemButton,
   Typography,
   styled,
-  Chip,
-  Tooltip,
 } from "@mui/material";
 import {
   ExpandLessRounded,
@@ -23,22 +21,17 @@ import { useThemeMode } from "@/services/states";
 import { useEffect, useMemo, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { downloadIconCache } from "@/services/cmds";
-import { useTranslation } from "react-i18next";
 
 interface RenderProps {
   item: IRenderItem;
   indent: boolean;
-  onLocation: (group: IRenderItem["group"]) => void;
+  onLocation: (group: IProxyGroupItem) => void;
   onCheckAll: (groupName: string) => void;
   onHeadState: (groupName: string, patch: Partial<HeadState>) => void;
-  onChangeProxy: (
-    group: IRenderItem["group"],
-    proxy: IRenderItem["proxy"] & { name: string },
-  ) => void;
+  onChangeProxy: (group: IProxyGroupItem, proxy: IProxyItem) => void;
 }
 
 export const ProxyRender = (props: RenderProps) => {
-  const { t } = useTranslation();
   const { indent, item, onLocation, onCheckAll, onHeadState, onChangeProxy } =
     props;
   const { type, group, headState, proxy, proxyCol } = item;
@@ -107,7 +100,7 @@ export const ProxyRender = (props: RenderProps) => {
         <ListItemText
           primary={<StyledPrimary>{group.name}</StyledPrimary>}
           secondary={
-            <Box
+            <ListItemTextChild
               sx={{
                 overflow: "hidden",
                 display: "flex",
@@ -115,36 +108,19 @@ export const ProxyRender = (props: RenderProps) => {
                 pt: "2px",
               }}
             >
-              <Box component="span" sx={{ marginTop: "2px" }}>
+              <Box sx={{ marginTop: "2px" }}>
                 <StyledTypeBox>{group.type}</StyledTypeBox>
                 <StyledSubtitle sx={{ color: "text.secondary" }}>
                   {group.now}
                 </StyledSubtitle>
               </Box>
-            </Box>
+            </ListItemTextChild>
           }
-          slotProps={{
-            secondary: {
-              component: "div",
-              sx: { display: "flex", alignItems: "center", color: "#ccc" },
-            },
+          secondaryTypographyProps={{
+            sx: { display: "flex", alignItems: "center", color: "#ccc" },
           }}
         />
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <Tooltip title={t("Proxy Count")} arrow>
-            <Chip
-              size="small"
-              label={`${group.all.length}`}
-              sx={{
-                mr: 1,
-                backgroundColor: (theme) =>
-                  alpha(theme.palette.primary.main, 0.1),
-                color: (theme) => theme.palette.primary.main,
-              }}
-            />
-          </Tooltip>
-          {headState?.open ? <ExpandLessRounded /> : <ExpandMoreRounded />}
-        </Box>
+        {headState?.open ? <ExpandLessRounded /> : <ExpandMoreRounded />}
       </ListItemButton>
     );
   }
@@ -228,7 +204,7 @@ export const ProxyRender = (props: RenderProps) => {
 };
 
 const StyledPrimary = styled("span")`
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   line-height: 1.5;
   overflow: hidden;
@@ -243,7 +219,11 @@ const StyledSubtitle = styled("span")`
   white-space: nowrap;
 `;
 
-const StyledTypeBox = styled(Box)(({ theme }) => ({
+const ListItemTextChild = styled("span")`
+  display: block;
+`;
+
+const StyledTypeBox = styled(ListItemTextChild)(({ theme }) => ({
   display: "inline-block",
   border: "1px solid #ccc",
   borderColor: alpha(theme.palette.primary.main, 0.5),

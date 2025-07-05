@@ -1,8 +1,8 @@
-use crate::{enhance::seq::SeqMap, logging, utils::logging::Type};
+use crate::enhance::seq::SeqMap;
 use anyhow::{anyhow, bail, Context, Result};
 use nanoid::nanoid;
 use serde::{de::DeserializeOwned, Serialize};
-use serde_yaml::Mapping;
+use serde_yaml::{Mapping, Value};
 use std::{fs, path::PathBuf, str::FromStr};
 
 /// read data from yaml as struct T
@@ -22,41 +22,19 @@ pub fn read_yaml<T: DeserializeOwned>(path: &PathBuf) -> Result<T> {
     })
 }
 
-/// read mapping from yaml
+/// read mapping from yaml fix #165
 pub fn read_mapping(path: &PathBuf) -> Result<Mapping> {
-    if !path.exists() {
-        bail!("file not found \"{}\"", path.display());
-    }
+    let mut val: Value = read_yaml(path)?;
+    val.apply_merge()
+        .with_context(|| format!("failed to apply merge \"{}\"", path.display()))?;
 
-    let yaml_str = fs::read_to_string(path)
-        .with_context(|| format!("failed to read the file \"{}\"", path.display()))?;
-
-    // YAML语法检查
-    match serde_yaml::from_str::<serde_yaml::Value>(&yaml_str) {
-        Ok(mut val) => {
-            val.apply_merge()
-                .with_context(|| format!("failed to apply merge \"{}\"", path.display()))?;
-
-            Ok(val
-                .as_mapping()
-                .ok_or(anyhow!(
-                    "failed to transform to yaml mapping \"{}\"",
-                    path.display()
-                ))?
-                .to_owned())
-        }
-        Err(err) => {
-            let error_msg = format!("YAML syntax error in {}: {}", path.display(), err);
-            logging!(error, Type::Config, true, "{}", error_msg);
-
-            crate::core::handle::Handle::notice_message(
-                "config_validate::yaml_syntax_error",
-                &error_msg,
-            );
-
-            bail!("YAML syntax error: {}", err)
-        }
-    }
+    Ok(val
+        .as_mapping()
+        .ok_or(anyhow!(
+            "failed to transform to yaml mapping \"{}\"",
+            path.display()
+        ))?
+        .to_owned())
 }
 
 /// read mapping from yaml fix #165
@@ -158,6 +136,52 @@ pub fn linux_elevator() -> String {
     }
 }
 
+#[macro_export]
+macro_rules! error {
+    ($result: expr) => {
+        log::error!(target: "app", "{}", $result);
+    };
+}
+
+#[macro_export]
+macro_rules! log_err {
+    ($result: expr) => {
+        if let Err(err) = $result {
+            log::error!(target: "app", "{err}");
+        }
+    };
+
+    ($result: expr, $err_str: expr) => {
+        if let Err(_) = $result {
+            log::error!(target: "app", "{}", $err_str);
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! trace_err {
+    ($result: expr, $err_str: expr) => {
+        if let Err(err) = $result {
+            log::trace!(target: "app", "{}, err {}", $err_str, err);
+        }
+    }
+}
+
+/// wrap the anyhow error
+/// transform the error to String
+#[macro_export]
+macro_rules! wrap_err {
+    ($stat: expr) => {
+        match $stat {
+            Ok(a) => Ok(a),
+            Err(err) => {
+                log::error!(target: "app", "{}", err.to_string());
+                Err(format!("{}", err.to_string()))
+            }
+        }
+    };
+}
+
 /// return the string literal error
 #[macro_export]
 macro_rules! ret_err {
@@ -181,31 +205,28 @@ macro_rules! t {
 /// 支持 B/s、KB/s、MB/s、GB/s 的自动转换
 ///
 /// # Examples
-/// ```not_run
-/// format_bytes_speed(1000) // returns "1000B/s"
-/// format_bytes_speed(1024) // returns "1.0KB/s"
-/// format_bytes_speed(1024 * 1024) // returns "1.0MB/s"
 /// ```
+/// assert_eq!(format_bytes_speed(1000), "1000B/s");
+/// assert_eq!(format_bytes_speed(1024), "1.0KB/s");
+/// assert_eq!(format_bytes_speed(1024 * 1024), "1.0MB/s");
 /// ```
 #[cfg(target_os = "macos")]
 pub fn format_bytes_speed(speed: u64) -> String {
-    const UNITS: [&str; 4] = ["B", "KB", "MB", "GB"];
-    let mut size = speed as f64;
-    let mut unit_index = 0;
-
-    while size >= 1000.0 && unit_index < UNITS.len() - 1 {
-        size /= 1024.0;
-        unit_index += 1;
+    if speed < 1024 {
+        format!("{}B/s", speed)
+    } else if speed < 1024 * 1024 {
+        format!("{:.1}KB/s", speed as f64 / 1024.0)
+    } else if speed < 1024 * 1024 * 1024 {
+        format!("{:.1}MB/s", speed as f64 / 1024.0 / 1024.0)
+    } else {
+        format!("{:.1}GB/s", speed as f64 / 1024.0 / 1024.0 / 1024.0)
     }
-
-    format!("{:.1}{}/s", size, UNITS[unit_index])
 }
 
-#[cfg(target_os = "macos")]
 #[test]
 fn test_format_bytes_speed() {
-    assert_eq!(format_bytes_speed(0), "0.0B/s");
-    assert_eq!(format_bytes_speed(1023), "1.0KB/s");
+    assert_eq!(format_bytes_speed(0), "0B/s");
+    assert_eq!(format_bytes_speed(1023), "1023B/s");
     assert_eq!(format_bytes_speed(1024), "1.0KB/s");
     assert_eq!(format_bytes_speed(1024 * 1024), "1.0MB/s");
     assert_eq!(format_bytes_speed(1024 * 1024 * 1024), "1.0GB/s");

@@ -12,10 +12,9 @@ import {
 } from "@mui/material";
 import { useVerge } from "@/hooks/use-verge";
 import { defaultTheme, defaultDarkTheme } from "@/pages/_theme";
-import { BaseDialog, DialogRef } from "@/components/base";
+import { BaseDialog, DialogRef, Notice } from "@/components/base";
 import { EditorViewer } from "@/components/profile/editor-viewer";
 import { EditRounded } from "@mui/icons-material";
-import { showNotice } from "@/services/noticeService";
 
 export const ThemeViewer = forwardRef<DialogRef>((props, ref) => {
   const { t } = useTranslation();
@@ -49,7 +48,7 @@ export const ThemeViewer = forwardRef<DialogRef>((props, ref) => {
       await patchVerge({ theme_setting: theme });
       setOpen(false);
     } catch (err: any) {
-      showNotice("error", err.toString());
+      Notice.error(err.message || err.toString());
     }
   });
 

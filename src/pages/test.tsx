@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useVerge } from "@/hooks/use-verge";
-import { Box, Button, Grid } from "@mui/material";
+import { Box, Button } from "@mui/material";
+import Grid2 from "@mui/material/Grid2";
 import {
   DndContext,
   closestCenter,
@@ -35,7 +36,7 @@ const TestPage = () => {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    }),
+    })
   );
   const { verge, mutateVerge, patchVerge } = useVerge();
 
@@ -69,7 +70,7 @@ const TestPage = () => {
 
   const onTestListItemChange = (
     uid: string,
-    patch?: Partial<IVergeTestItem>,
+    patch?: Partial<IVergeTestItem>
   ) => {
     if (patch) {
       const newList = testList.map((x) => {
@@ -176,14 +177,14 @@ const TestPage = () => {
           onDragEnd={onDragEnd}
         >
           <Box sx={{ mb: 4.5 }}>
-            <Grid container spacing={{ xs: 1, lg: 1 }}>
+            <Grid2 container spacing={{ xs: 1, lg: 1 }}>
               <SortableContext
                 items={testList.map((x) => {
                   return x.uid;
                 })}
               >
                 {testList.map((item) => (
-                  <Grid
+                  <Grid2
                     component={"div"}
                     size={{ xs: 6, lg: 2, sm: 4, md: 3 }}
                     key={item.uid}
@@ -194,10 +195,10 @@ const TestPage = () => {
                       onEdit={() => viewerRef.current?.edit(item)}
                       onDelete={onDeleteTestListItem}
                     />
-                  </Grid>
+                  </Grid2>
                 ))}
               </SortableContext>
-            </Grid>
+            </Grid2>
           </Box>
         </DndContext>
 

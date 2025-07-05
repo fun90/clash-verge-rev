@@ -1,24 +1,21 @@
 use super::{Draft, IClashTemp, IProfiles, IRuntime, IVerge};
 use crate::{
     config::PrfItem,
-    core::{handle, CoreManager},
-    enhance, logging,
-    process::AsyncHandler,
-    utils::{dirs, help, logging::Type},
+    enhance,
+    utils::{dirs, help},
 };
 use anyhow::{anyhow, Result};
 use once_cell::sync::OnceCell;
 use std::path::PathBuf;
-use tokio::time::{sleep, Duration};
 
 pub const RUNTIME_CONFIG: &str = "clash-verge.yaml";
 pub const CHECK_CONFIG: &str = "clash-verge-check.yaml";
 
 pub struct Config {
-    clash_config: Draft<Box<IClashTemp>>,
-    verge_config: Draft<Box<IVerge>>,
-    profiles_config: Draft<Box<IProfiles>>,
-    runtime_config: Draft<Box<IRuntime>>,
+    clash_config: Draft<IClashTemp>,
+    verge_config: Draft<IVerge>,
+    profiles_config: Draft<IProfiles>,
+    runtime_config: Draft<IRuntime>,
 }
 
 impl Config {
@@ -26,26 +23,26 @@ impl Config {
         static CONFIG: OnceCell<Config> = OnceCell::new();
 
         CONFIG.get_or_init(|| Config {
-            clash_config: Draft::from(Box::new(IClashTemp::new())),
-            verge_config: Draft::from(Box::new(IVerge::new())),
-            profiles_config: Draft::from(Box::new(IProfiles::new())),
-            runtime_config: Draft::from(Box::new(IRuntime::new())),
+            clash_config: Draft::from(IClashTemp::new()),
+            verge_config: Draft::from(IVerge::new()),
+            profiles_config: Draft::from(IProfiles::new()),
+            runtime_config: Draft::from(IRuntime::new()),
         })
     }
 
-    pub fn clash() -> Draft<Box<IClashTemp>> {
+    pub fn clash() -> Draft<IClashTemp> {
         Self::global().clash_config.clone()
     }
 
-    pub fn verge() -> Draft<Box<IVerge>> {
+    pub fn verge() -> Draft<IVerge> {
         Self::global().verge_config.clone()
     }
 
-    pub fn profiles() -> Draft<Box<IProfiles>> {
+    pub fn profiles() -> Draft<IProfiles> {
         Self::global().profiles_config.clone()
     }
 
-    pub fn runtime() -> Draft<Box<IRuntime>> {
+    pub fn runtime() -> Draft<IRuntime> {
         Self::global().runtime_config.clone()
     }
 
@@ -67,63 +64,20 @@ impl Config {
             let script_item = PrfItem::from_script(Some("Script".to_string()))?;
             Self::profiles().data().append_item(script_item.clone())?;
         }
-        // 生成运行时配置
-        if let Err(err) = Self::generate().await {
-            logging!(error, Type::Config, true, "生成运行时配置失败: {}", err);
-        } else {
-            logging!(info, Type::Config, true, "生成运行时配置成功");
-        }
+        crate::log_err!(Self::generate().await);
+        if let Err(err) = Self::generate_file(ConfigType::Run) {
+            log::error!(target: "app", "{err}");
 
-        // 生成运行时配置文件并验证
-        let config_result = Self::generate_file(ConfigType::Run);
-
-        let validation_result = if config_result.is_ok() {
-            // 验证配置文件
-            logging!(info, Type::Config, true, "开始验证配置");
-
-            match CoreManager::global().validate_config().await {
-                Ok((is_valid, error_msg)) => {
-                    if !is_valid {
-                        logging!(
-                            warn,
-                            Type::Config,
-                            true,
-                            "[首次启动] 配置验证失败，使用默认最小配置启动: {}",
-                            error_msg
-                        );
-                        CoreManager::global()
-                            .use_default_config("config_validate::boot_error", &error_msg)
-                            .await?;
-                        Some(("config_validate::boot_error", error_msg))
-                    } else {
-                        logging!(info, Type::Config, true, "配置验证成功");
-                        Some(("config_validate::success", String::new()))
-                    }
-                }
-                Err(err) => {
-                    logging!(warn, Type::Config, true, "验证进程执行失败: {}", err);
-                    CoreManager::global()
-                        .use_default_config("config_validate::process_terminated", "")
-                        .await?;
-                    Some(("config_validate::process_terminated", String::new()))
-                }
+            let runtime_path = dirs::app_home_dir()?.join(RUNTIME_CONFIG);
+            // 如果不存在就将默认的clash文件拿过来
+            if !runtime_path.exists() {
+                help::save_yaml(
+                    &runtime_path,
+                    &Config::clash().latest().0,
+                    Some("# Clash Verge Runtime"),
+                )?;
             }
-        } else {
-            logging!(warn, Type::Config, true, "生成配置文件失败，使用默认配置");
-            CoreManager::global()
-                .use_default_config("config_validate::error", "")
-                .await?;
-            Some(("config_validate::error", String::new()))
-        };
-
-        // 在单独的任务中发送通知
-        if let Some((msg_type, msg_content)) = validation_result {
-            AsyncHandler::spawn(move || async move {
-                sleep(Duration::from_secs(2)).await;
-                handle::Handle::notice_message(msg_type, &msg_content);
-            });
         }
-
         Ok(())
     }
 
@@ -149,11 +103,11 @@ impl Config {
     pub async fn generate() -> Result<()> {
         let (config, exists_keys, logs) = enhance::enhance().await;
 
-        *Config::runtime().draft() = Box::new(IRuntime {
+        *Config::runtime().draft() = IRuntime {
             config: Some(config),
             exists_keys,
             chain_logs: logs,
-        });
+        };
 
         Ok(())
     }
@@ -163,43 +117,4 @@ impl Config {
 pub enum ConfigType {
     Run,
     Check,
-}
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::mem;
-
-    #[test]
-    fn test_prfitem_from_merge_size() {
-        let merge_item = PrfItem::from_merge(Some("Merge".to_string())).unwrap();
-        dbg!(&merge_item);
-        let prfitem_size = mem::size_of_val(&merge_item);
-        dbg!(prfitem_size);
-        // Boxed version
-        let boxed_merge_item = Box::new(merge_item);
-        let box_prfitem_size = mem::size_of_val(&boxed_merge_item);
-        dbg!(box_prfitem_size);
-        // The size of Box<T> is always pointer-sized (usually 8 bytes on 64-bit)
-        // assert_eq!(box_prfitem_size, mem::size_of::<Box<PrfItem>>());
-        assert!(box_prfitem_size < prfitem_size);
-    }
-
-    #[test]
-    fn test_draft_size_non_boxed() {
-        let draft = Draft::from(IRuntime::new());
-        let iruntime_size = std::mem::size_of_val(&draft);
-        dbg!(iruntime_size);
-        assert_eq!(iruntime_size, std::mem::size_of::<Draft<IRuntime>>());
-    }
-
-    #[test]
-    fn test_draft_size_boxed() {
-        let draft = Draft::from(Box::new(IRuntime::new()));
-        let box_iruntime_size = std::mem::size_of_val(&draft);
-        dbg!(box_iruntime_size);
-        assert_eq!(
-            box_iruntime_size,
-            std::mem::size_of::<Draft<Box<IRuntime>>>()
-        );
-    }
 }

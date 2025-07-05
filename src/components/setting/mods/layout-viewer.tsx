@@ -11,8 +11,7 @@ import {
   Box,
 } from "@mui/material";
 import { useVerge } from "@/hooks/use-verge";
-import { BaseDialog, DialogRef, Switch } from "@/components/base";
-import { TooltipIcon } from "@/components/base/base-tooltip-icon";
+import { BaseDialog, DialogRef, Notice, Switch } from "@/components/base";
 import { GuardState } from "./guard-state";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { convertFileSrc } from "@tauri-apps/api/core";
@@ -20,21 +19,8 @@ import { copyIconFile, getAppDir } from "@/services/cmds";
 import { join } from "@tauri-apps/api/path";
 import { exists } from "@tauri-apps/plugin-fs";
 import getSystem from "@/utils/get-system";
-import { showNotice } from "@/services/noticeService";
 
 const OS = getSystem();
-
-const getIcons = async (icon_dir: string, name: string) => {
-  const updateTime = localStorage.getItem(`icon_${name}_update_time`) || "";
-
-  const icon_png = await join(icon_dir, `${name}-${updateTime}.png`);
-  const icon_ico = await join(icon_dir, `${name}-${updateTime}.ico`);
-
-  return {
-    icon_png,
-    icon_ico,
-  };
-};
 
 export const LayoutViewer = forwardRef<DialogRef>((props, ref) => {
   const { t } = useTranslation();
@@ -51,20 +37,13 @@ export const LayoutViewer = forwardRef<DialogRef>((props, ref) => {
 
   async function initIconPath() {
     const appDir = await getAppDir();
-
     const icon_dir = await join(appDir, "icons");
-
-    const { icon_png: common_icon_png, icon_ico: common_icon_ico } =
-      await getIcons(icon_dir, "common");
-
-    const { icon_png: sysproxy_icon_png, icon_ico: sysproxy_icon_ico } =
-      await getIcons(icon_dir, "sysproxy");
-
-    const { icon_png: tun_icon_png, icon_ico: tun_icon_ico } = await getIcons(
-      icon_dir,
-      "tun",
-    );
-
+    const common_icon_png = await join(icon_dir, "common.png");
+    const common_icon_ico = await join(icon_dir, "common.ico");
+    const sysproxy_icon_png = await join(icon_dir, "sysproxy.png");
+    const sysproxy_icon_ico = await join(icon_dir, "sysproxy.ico");
+    const tun_icon_png = await join(icon_dir, "tun.png");
+    const tun_icon_ico = await join(icon_dir, "tun.ico");
     if (await exists(common_icon_ico)) {
       setCommonIcon(common_icon_ico);
     } else {
@@ -89,7 +68,7 @@ export const LayoutViewer = forwardRef<DialogRef>((props, ref) => {
 
   const onSwitchFormat = (_e: any, value: boolean) => value;
   const onError = (err: any) => {
-    showNotice("error", err.message || err.toString());
+    Notice.error(err.message || err.toString());
   };
   const onChangeData = (patch: Partial<IVergeConfig>) => {
     mutateVerge({ ...verge, ...patch }, false);
@@ -149,30 +128,6 @@ export const LayoutViewer = forwardRef<DialogRef>((props, ref) => {
         </Item>
 
         <Item>
-          <ListItemText
-            primary={
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <span>{t("Hover Jump Navigator")}</span>
-                <TooltipIcon
-                  title={t("Hover Jump Navigator Info")}
-                  sx={{ opacity: "0.7" }}
-                />
-              </Box>
-            }
-          />
-          <GuardState
-            value={verge?.enable_hover_jump_navigator ?? true}
-            valueProps="checked"
-            onCatch={onError}
-            onFormat={onSwitchFormat}
-            onChange={(e) => onChangeData({ enable_hover_jump_navigator: e })}
-            onGuard={(e) => patchVerge({ enable_hover_jump_navigator: e })}
-          >
-            <Switch edge="end" />
-          </GuardState>
-        </Item>
-
-        <Item>
           <ListItemText primary={t("Nav Icon")} />
           <GuardState
             value={verge?.menu_icon ?? "monochrome"}
@@ -213,32 +168,12 @@ export const LayoutViewer = forwardRef<DialogRef>((props, ref) => {
           <Item>
             <ListItemText primary={t("Enable Tray Speed")} />
             <GuardState
-              value={verge?.enable_tray_speed ?? false}
+              value={verge?.enable_tray_speed ?? true}
               valueProps="checked"
               onCatch={onError}
               onFormat={onSwitchFormat}
               onChange={(e) => onChangeData({ enable_tray_speed: e })}
               onGuard={(e) => patchVerge({ enable_tray_speed: e })}
-            >
-              <Switch edge="end" />
-            </GuardState>
-          </Item>
-        )}
-        {OS === "macos" && (
-          <Item>
-            <ListItemText primary={t("Enable Tray Icon")} />
-            <GuardState
-              value={
-                verge?.enable_tray_icon === false &&
-                verge?.enable_tray_speed === false
-                  ? true
-                  : (verge?.enable_tray_icon ?? true)
-              }
-              valueProps="checked"
-              onCatch={onError}
-              onFormat={onSwitchFormat}
-              onChange={(e) => onChangeData({ enable_tray_icon: e })}
-              onGuard={(e) => patchVerge({ enable_tray_icon: e })}
             >
               <Switch edge="end" />
             </GuardState>
@@ -277,13 +212,11 @@ export const LayoutViewer = forwardRef<DialogRef>((props, ref) => {
                       },
                     ],
                   });
-
                   if (selected) {
                     await copyIconFile(`${selected}`, "common");
                     await initIconPath();
                     onChangeData({ common_tray_icon: true });
                     patchVerge({ common_tray_icon: true });
-                    console.log();
                   }
                 }
               }}

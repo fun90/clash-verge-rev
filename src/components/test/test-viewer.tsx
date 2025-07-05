@@ -4,9 +4,8 @@ import { useTranslation } from "react-i18next";
 import { useForm, Controller } from "react-hook-form";
 import { TextField } from "@mui/material";
 import { useVerge } from "@/hooks/use-verge";
-import { BaseDialog } from "@/components/base";
+import { BaseDialog, Notice } from "@/components/base";
 import { nanoid } from "nanoid";
-import { showNotice } from "@/services/noticeService";
 
 interface Props {
   onChange: (uid: string, patch?: Partial<IVergeTestItem>) => void;
@@ -76,7 +75,7 @@ export const TestViewer = forwardRef<TestViewerRef, Props>((props, ref) => {
           }
           const doc = new DOMParser().parseFromString(
             form.icon,
-            "image/svg+xml",
+            "image/svg+xml"
           );
           if (doc.querySelector("parsererror")) {
             throw new Error("`Icon`svg format error");
@@ -100,10 +99,10 @@ export const TestViewer = forwardRef<TestViewerRef, Props>((props, ref) => {
         setLoading(false);
         setTimeout(() => formIns.reset(), 500);
       } catch (err: any) {
-        showNotice("error", err.message || err.toString());
+        Notice.error(err.message || err.toString());
         setLoading(false);
       }
-    }),
+    })
   );
 
   const handleClose = () => {

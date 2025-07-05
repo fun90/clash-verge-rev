@@ -7,16 +7,11 @@ import fa from "@/locales/fa.json";
 import tt from "@/locales/tt.json";
 import id from "@/locales/id.json";
 import ar from "@/locales/ar.json";
-import ko from "@/locales/ko.json";
-import tr from "@/locales/tr.json";
 
-export const languages = { en, ru, zh, fa, tt, id, ar, ko, tr };
+export const languages = { en, ru, zh, fa, tt, id, ar };
 
 const resources = Object.fromEntries(
-  Object.entries(languages).map(([key, value]) => [
-    key,
-    { translation: value },
-  ]),
+  Object.entries(languages).map(([key, value]) => [key, { translation: value }])
 );
 
 i18n.use(initReactI18next).init({

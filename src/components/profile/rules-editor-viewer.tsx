@@ -34,14 +34,13 @@ import {
   VerticalAlignBottomRounded,
 } from "@mui/icons-material";
 import { readProfileFile, saveProfileFile } from "@/services/cmds";
-import { Switch } from "@/components/base";
+import { Notice, Switch } from "@/components/base";
 import getSystem from "@/utils/get-system";
 import { RuleItem } from "@/components/profile/rule-item";
 import { BaseSearchBox } from "../base/base-search-box";
 import { Virtuoso } from "react-virtuoso";
 import MonacoEditor from "react-monaco-editor";
 import { useThemeMode } from "@/services/states";
-import { showNotice } from "@/services/noticeService";
 
 interface Props {
   groupsUid: string;
@@ -55,17 +54,17 @@ interface Props {
 
 const portValidator = (value: string): boolean => {
   return new RegExp(
-    "^(?:[1-9]\\d{0,3}|[1-5]\\d{4}|6[0-4]\\d{3}|65[0-4]\\d{2}|655[0-2]\\d|6553[0-5])$",
+    "^(?:[1-9]\\d{0,3}|[1-5]\\d{4}|6[0-4]\\d{3}|65[0-4]\\d{2}|655[0-2]\\d|6553[0-5])$"
   ).test(value);
 };
 const ipv4CIDRValidator = (value: string): boolean => {
   return new RegExp(
-    "^(?:(?:[1-9]?[0-9]|1[0-9][0-9]|2(?:[0-4][0-9]|5[0-5]))\\.){3}(?:[1-9]?[0-9]|1[0-9][0-9]|2(?:[0-4][0-9]|5[0-5]))(?:\\/(?:[12]?[0-9]|3[0-2]))$",
+    "^(?:(?:[1-9]?[0-9]|1[0-9][0-9]|2(?:[0-4][0-9]|5[0-5]))\\.){3}(?:[1-9]?[0-9]|1[0-9][0-9]|2(?:[0-4][0-9]|5[0-5]))(?:\\/(?:[12]?[0-9]|3[0-2]))$"
   ).test(value);
 };
 const ipv6CIDRValidator = (value: string): boolean => {
   return new RegExp(
-    "^([0-9a-fA-F]{1,4}(?::[0-9a-fA-F]{1,4}){7}|::|:(?::[0-9a-fA-F]{1,4}){1,6}|[0-9a-fA-F]{1,4}:(?::[0-9a-fA-F]{1,4}){1,5}|(?:[0-9a-fA-F]{1,4}:){2}(?::[0-9a-fA-F]{1,4}){1,4}|(?:[0-9a-fA-F]{1,4}:){3}(?::[0-9a-fA-F]{1,4}){1,3}|(?:[0-9a-fA-F]{1,4}:){4}(?::[0-9a-fA-F]{1,4}){1,2}|(?:[0-9a-fA-F]{1,4}:){5}:[0-9a-fA-F]{1,4}|(?:[0-9a-fA-F]{1,4}:){1,6}:)\\/(?:12[0-8]|1[01][0-9]|[1-9]?[0-9])$",
+    "^([0-9a-fA-F]{1,4}(?::[0-9a-fA-F]{1,4}){7}|::|:(?::[0-9a-fA-F]{1,4}){1,6}|[0-9a-fA-F]{1,4}:(?::[0-9a-fA-F]{1,4}){1,5}|(?:[0-9a-fA-F]{1,4}:){2}(?::[0-9a-fA-F]{1,4}){1,4}|(?:[0-9a-fA-F]{1,4}:){3}(?::[0-9a-fA-F]{1,4}){1,3}|(?:[0-9a-fA-F]{1,4}:){4}(?::[0-9a-fA-F]{1,4}){1,2}|(?:[0-9a-fA-F]{1,4}:){5}:[0-9a-fA-F]{1,4}|(?:[0-9a-fA-F]{1,4}:){1,6}:)\\/(?:12[0-8]|1[01][0-9]|[1-9]?[0-9])$"
   ).test(value);
 };
 
@@ -260,22 +259,22 @@ export const RulesEditorViewer = (props: Props) => {
 
   const filteredPrependSeq = useMemo(
     () => prependSeq.filter((rule) => match(rule)),
-    [prependSeq, match],
+    [prependSeq, match]
   );
   const filteredRuleList = useMemo(
     () => ruleList.filter((rule) => match(rule)),
-    [ruleList, match],
+    [ruleList, match]
   );
   const filteredAppendSeq = useMemo(
     () => appendSeq.filter((rule) => match(rule)),
-    [appendSeq, match],
+    [appendSeq, match]
   );
 
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    }),
+    })
   );
   const reorder = (list: string[], startIndex: number, endIndex: number) => {
     const result = Array.from(list);
@@ -325,27 +324,16 @@ export const RulesEditorViewer = (props: Props) => {
     setDeleteSeq(obj?.delete || []);
   }, [visualization]);
 
-  // 优化：异步处理大数据yaml.dump，避免UI卡死
   useEffect(() => {
-    if (prependSeq && appendSeq && deleteSeq) {
-      const serialize = () => {
-        try {
-          setCurrData(
-            yaml.dump(
-              { prepend: prependSeq, append: appendSeq, delete: deleteSeq },
-              { forceQuotes: true },
-            ),
-          );
-        } catch (e: any) {
-          showNotice("error", e?.message || e?.toString() || "YAML dump error");
-        }
-      };
-      if (window.requestIdleCallback) {
-        window.requestIdleCallback(serialize);
-      } else {
-        setTimeout(serialize, 0);
-      }
-    }
+    if (prependSeq && appendSeq && deleteSeq)
+      setCurrData(
+        yaml.dump(
+          { prepend: prependSeq, append: appendSeq, delete: deleteSeq },
+          {
+            forceQuotes: true,
+          }
+        )
+      );
   }, [prependSeq, appendSeq, deleteSeq]);
 
   const fetchProfile = async () => {
@@ -371,7 +359,7 @@ export const RulesEditorViewer = (props: Props) => {
           return !moreDeleteGroups.includes(group);
         }
       }),
-      moreAppendGroups,
+      moreAppendGroups
     );
 
     let originRuleSetObj = yaml.load(data) as { "rule-providers": {} } | null;
@@ -396,7 +384,7 @@ export const RulesEditorViewer = (props: Props) => {
     let globalSubRule = globalSubRuleObj?.["sub-rules"] || {};
     let subRule = Object.assign({}, originSubRule, moreSubRule, globalSubRule);
     setProxyPolicyList(
-      builtinProxyPolicies.concat(groups.map((group: any) => group.name)),
+      builtinProxyPolicies.concat(groups.map((group: any) => group.name))
     );
     setRuleSetList(Object.keys(ruleSet));
     setSubRuleList(Object.keys(subRule));
@@ -417,7 +405,7 @@ export const RulesEditorViewer = (props: Props) => {
       throw new Error(t("Invalid Rule"));
     }
 
-    const condition = (ruleType.required ?? true) ? ruleContent : "";
+    const condition = ruleType.required ?? true ? ruleContent : "";
     return `${ruleType.name}${condition ? "," + condition : ""},${proxyPolicy}${
       ruleType.noResolve && noResolve ? ",no-resolve" : ""
     }`;
@@ -426,11 +414,10 @@ export const RulesEditorViewer = (props: Props) => {
   const handleSave = useLockFn(async () => {
     try {
       await saveProfileFile(property, currData);
-      showNotice("success", t("Saved Successfully"));
       onSave?.(prevData, currData);
       onClose();
     } catch (err: any) {
-      showNotice("error", err.toString());
+      Notice.error(err.message || err.toString());
     }
   });
 
@@ -558,7 +545,7 @@ export const RulesEditorViewer = (props: Props) => {
                       if (prependSeq.includes(raw)) return;
                       setPrependSeq([raw, ...prependSeq]);
                     } catch (err: any) {
-                      showNotice("error", err.message || err.toString());
+                      Notice.error(err.message || err.toString());
                     }
                   }}
                 >
@@ -576,7 +563,7 @@ export const RulesEditorViewer = (props: Props) => {
                       if (appendSeq.includes(raw)) return;
                       setAppendSeq([...appendSeq, raw]);
                     } catch (err: any) {
-                      showNotice("error", err.message || err.toString());
+                      Notice.error(err.message || err.toString());
                     }
                   }}
                 >
@@ -622,7 +609,7 @@ export const RulesEditorViewer = (props: Props) => {
                                 ruleRaw={item}
                                 onDelete={() => {
                                   setPrependSeq(
-                                    prependSeq.filter((v) => v !== item),
+                                    prependSeq.filter((v) => v !== item)
                                   );
                                 }}
                               />
@@ -646,8 +633,8 @@ export const RulesEditorViewer = (props: Props) => {
                           if (deleteSeq.includes(filteredRuleList[newIndex])) {
                             setDeleteSeq(
                               deleteSeq.filter(
-                                (v) => v !== filteredRuleList[newIndex],
-                              ),
+                                (v) => v !== filteredRuleList[newIndex]
+                              )
                             );
                           } else {
                             setDeleteSeq((prev) => [
@@ -678,7 +665,7 @@ export const RulesEditorViewer = (props: Props) => {
                                 ruleRaw={item}
                                 onDelete={() => {
                                   setAppendSeq(
-                                    appendSeq.filter((v) => v !== item),
+                                    appendSeq.filter((v) => v !== item)
                                   );
                                 }}
                               />
@@ -715,7 +702,7 @@ export const RulesEditorViewer = (props: Props) => {
               fontFamily: `Fira Code, JetBrains Mono, Roboto Mono, "Source Code Pro", Consolas, Menlo, Monaco, monospace, "Courier New", "Apple Color Emoji"${
                 getSystem() === "windows" ? ", twemoji mozilla" : ""
               }`,
-              fontLigatures: false, // 连字符
+              fontLigatures: true, // 连字符
               smoothScrolling: true, // 平滑滚动
             }}
             onChange={(value) => setCurrData(value)}

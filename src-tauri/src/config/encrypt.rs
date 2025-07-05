@@ -16,7 +16,7 @@ pub fn encrypt_data(data: &str) -> Result<String, Box<dyn std::error::Error>> {
 
     // Generate random nonce
     let mut nonce = vec![0u8; NONCE_LENGTH];
-    getrandom::fill(&mut nonce)?;
+    getrandom::getrandom(&mut nonce)?;
 
     // Encrypt data
     let ciphertext = cipher

@@ -1,5 +1,6 @@
+import dayjs from "dayjs";
 import { invoke } from "@tauri-apps/api/core";
-import { showNotice } from "@/services/noticeService";
+import { Notice } from "@/components/base";
 
 export async function copyClashEnv() {
   return invoke<void>("copy_clash_env");
@@ -19,7 +20,7 @@ export async function patchProfilesConfig(profiles: IProfilesConfig) {
 
 export async function createProfile(
   item: Partial<IProfileItem>,
-  fileData?: string | null,
+  fileData?: string | null
 ) {
   return invoke<void>("create_profile", { item, fileData });
 }
@@ -36,10 +37,10 @@ export async function saveProfileFile(index: string, fileData: string) {
   return invoke<void>("save_profile_file", { index, fileData });
 }
 
-export async function importProfile(url: string, option?: IProfileOption) {
+export async function importProfile(url: string) {
   return invoke<void>("import_profile", {
     url,
-    option: option || { with_proxy: true },
+    option: { with_proxy: true },
   });
 }
 
@@ -60,7 +61,7 @@ export async function deleteProfile(index: string) {
 
 export async function patchProfile(
   index: string,
-  profile: Partial<IProfileItem>,
+  profile: Partial<IProfileItem>
 ) {
   return invoke<void>("patch_profile", { index, profile });
 }
@@ -90,10 +91,6 @@ export async function patchClashConfig(payload: Partial<IConfigData>) {
   return invoke<void>("patch_clash_config", { payload });
 }
 
-export async function patchClashMode(payload: String) {
-  return invoke<void>("patch_clash_mode", { payload });
-}
-
 export async function getVergeConfig() {
   return invoke<IVergeConfig>("get_verge_config");
 }
@@ -117,26 +114,8 @@ export async function getAutotemProxy() {
   }>("get_auto_proxy");
 }
 
-export async function getAutoLaunchStatus() {
-  try {
-    return await invoke<boolean>("get_auto_launch_status");
-  } catch (error) {
-    console.error("获取自启动状态失败:", error);
-    // 出错时返回false作为默认值
-    return false;
-  }
-}
-
 export async function changeClashCore(clashCore: string) {
-  return invoke<string | null>("change_clash_core", { clashCore });
-}
-
-export async function startCore() {
-  return invoke<void>("start_core");
-}
-
-export async function stopCore() {
-  return invoke<void>("stop_core");
+  return invoke<any>("change_clash_core", { clashCore });
 }
 
 export async function restartCore() {
@@ -153,77 +132,37 @@ export async function getAppDir() {
 
 export async function openAppDir() {
   return invoke<void>("open_app_dir").catch((err) =>
-    showNotice("error", err?.message || err.toString()),
+    Notice.error(err?.message || err.toString(), 1500)
   );
 }
 
 export async function openCoreDir() {
   return invoke<void>("open_core_dir").catch((err) =>
-    showNotice("error", err?.message || err.toString()),
+    Notice.error(err?.message || err.toString(), 1500)
   );
 }
 
 export async function openLogsDir() {
   return invoke<void>("open_logs_dir").catch((err) =>
-    showNotice("error", err?.message || err.toString()),
+    Notice.error(err?.message || err.toString(), 1500)
   );
 }
 
-export const openWebUrl = async (url: string) => {
-  try {
-    await invoke("open_web_url", { url });
-  } catch (err: any) {
-    showNotice("error", err.toString());
-  }
-};
+export async function openWebUrl(url: string) {
+  return invoke<void>("open_web_url", { url });
+}
 
 export async function cmdGetProxyDelay(
   name: string,
   timeout: number,
-  url?: string,
+  url?: string
 ) {
-  // 确保URL不为空
-  const testUrl = url || "https://cp.cloudflare.com/generate_204";
-  console.log(
-    `[API] 调用延迟测试API，代理: ${name}, 超时: ${timeout}ms, URL: ${testUrl}`,
-  );
-
-  try {
-    name = encodeURIComponent(name);
-    const result = await invoke<{ delay: number }>(
-      "clash_api_get_proxy_delay",
-      {
-        name,
-        url: testUrl, // 传递经过验证的URL
-        timeout,
-      },
-    );
-
-    // 验证返回结果中是否有delay字段，并且值是一个有效的数字
-    if (result && typeof result.delay === "number") {
-      console.log(
-        `[API] 延迟测试API调用成功，代理: ${name}, 延迟: ${result.delay}ms`,
-      );
-      return result;
-    } else {
-      console.error(
-        `[API] 延迟测试API返回无效结果，代理: ${name}, 结果:`,
-        result,
-      );
-      // 返回一个有效的结果对象，但标记为超时
-      return { delay: 1e6 };
-    }
-  } catch (error) {
-    console.error(`[API] 延迟测试API调用失败，代理: ${name}`, error);
-    // 返回一个有效的结果对象，但标记为错误
-    return { delay: 1e6 };
-  }
-}
-
-/// 用于profile切换等场景
-export async function forceRefreshProxies() {
-  console.log("[API] 强制刷新代理缓存");
-  return invoke<any>("force_refresh_proxies");
+  name = encodeURIComponent(name);
+  return invoke<{ delay: number }>("clash_api_get_proxy_delay", {
+    name,
+    url,
+    timeout,
+  });
 }
 
 export async function cmdTestDelay(url: string) {
@@ -232,7 +171,7 @@ export async function cmdTestDelay(url: string) {
 
 export async function invoke_uwp_tool() {
   return invoke<void>("invoke_uwp_tool").catch((err) =>
-    showNotice("error", err?.message || err.toString(), 1500),
+    Notice.error(err?.message || err.toString(), 1500)
   );
 }
 
@@ -248,31 +187,11 @@ export async function exitApp() {
   return invoke("exit_app");
 }
 
-export async function exportDiagnosticInfo() {
-  return invoke("export_diagnostic_info");
-}
-
-export async function getSystemInfo() {
-  return invoke<string>("get_system_info");
-}
-
 export async function copyIconFile(
   path: string,
-  name: "common" | "sysproxy" | "tun",
+  name: "common" | "sysproxy" | "tun"
 ) {
-  const key = `icon_${name}_update_time`;
-  const previousTime = localStorage.getItem(key) || "";
-
-  const currentTime = String(Date.now());
-  localStorage.setItem(key, currentTime);
-
-  const iconInfo = {
-    name,
-    previous_t: previousTime,
-    current_t: currentTime,
-  };
-
-  return invoke<void>("copy_icon_file", { path, iconInfo });
+  return invoke<void>("copy_icon_file", { path, name });
 }
 
 export async function downloadIconCache(url: string, name: string) {
@@ -281,10 +200,6 @@ export async function downloadIconCache(url: string, name: string) {
 
 export async function getNetworkInterfaces() {
   return invoke<string[]>("get_network_interfaces");
-}
-
-export async function getSystemHostname() {
-  return invoke<string>("get_system_hostname");
 }
 
 export async function getNetworkInterfacesInfo() {
@@ -306,7 +221,7 @@ export async function restoreWebDavBackup(filename: string) {
 export async function saveWebdavConfig(
   url: string,
   username: string,
-  password: String,
+  password: String
 ) {
   return invoke<void>("save_webdav_config", {
     url,
@@ -321,72 +236,4 @@ export async function listWebDavBackup() {
     item.filename = item.href.split("/").pop() as string;
   });
   return list;
-}
-
-export async function scriptValidateNotice(status: string, msg: string) {
-  return invoke<void>("script_validate_notice", { status, msg });
-}
-
-export async function validateScriptFile(filePath: string) {
-  return invoke<boolean>("validate_script_file", { filePath });
-}
-
-// 获取当前运行模式
-export const getRunningMode = async () => {
-  return invoke<string>("get_running_mode");
-};
-
-// 获取应用运行时间
-export const getAppUptime = async () => {
-  return invoke<number>("get_app_uptime");
-};
-
-// 安装系统服务
-export const installService = async () => {
-  return invoke<void>("install_service");
-};
-
-// 卸载系统服务
-export const uninstallService = async () => {
-  return invoke<void>("uninstall_service");
-};
-
-// 重装系统服务
-export const reinstallService = async () => {
-  return invoke<void>("reinstall_service");
-};
-
-// 修复系统服务
-export const repairService = async () => {
-  return invoke<void>("repair_service");
-};
-
-// 系统服务是否可用
-export const isServiceAvailable = async () => {
-  try {
-    return await invoke<boolean>("is_service_available");
-  } catch (error) {
-    console.error("Service check failed:", error);
-    return false;
-  }
-};
-export const entry_lightweight_mode = async () => {
-  return invoke<void>("entry_lightweight_mode");
-};
-
-export const exit_lightweight_mode = async () => {
-  return invoke<void>("exit_lightweight_mode");
-};
-
-export const isAdmin = async () => {
-  try {
-    return await invoke<boolean>("is_admin");
-  } catch (error) {
-    console.error("检查管理员权限失败:", error);
-    return false;
-  }
-};
-
-export async function getNextUpdateTime(uid: string) {
-  return invoke<number | null>("get_next_update_time", { uid });
 }
