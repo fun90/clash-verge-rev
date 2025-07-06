@@ -36,7 +36,17 @@ pub async fn enhance_profiles() -> CmdResult {
 #[tauri::command]
 pub async fn import_profile(url: String, option: Option<PrfOption>) -> CmdResult {
     let item = wrap_err!(PrfItem::from_url(&url, None, None, option).await)?;
-    wrap_err!(Config::profiles().data().append_item(item))
+    let item_uid = item.uid.clone();  // 获取新配置文件的 uid
+    wrap_err!(Config::profiles().data().append_item(item))?;
+
+    // 获取当前的配置文件数据
+    let mut profiles = Config::profiles().data().clone();
+
+    // 将新导入的配置设置为当前配置
+    profiles.current = item_uid;
+
+    // 调用 patch_profiles_config 启用新配置
+    patch_profiles_config(profiles).await
 }
 
 #[tauri::command]
